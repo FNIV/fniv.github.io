@@ -621,13 +621,15 @@
     let lastToggleTime = 0; let mouseX = 0; let isCustomNight = false;
     let goldenVrajActive = false; let goldenTimer = null;
     let foxyRunPending = false;
+    
     let powerTimer = null;
+    let exactPower = 100.0;
     
     // Surprise sound logic trackers
     let seenAtDoor = { left: false, right: false };
 
     const NIGHT_DIFFICULTY = { 1: [0,0,0,0,0], 2: [3,1,0,1,0], 3: [0,5,2,2,0], 4: [2,4,6,6,0], 5: [5,7,5,10,0], 6: [10,12,6,16,0] };
-    let gameState = { active: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', doors: {left:false,right:false}, lights: {left:false,right:false} };
+    let gameState = { active: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
     
     // Adjacency Map for Realistic Movement
     const ADJACENCY = {
@@ -664,7 +666,7 @@
             localStorage.setItem('vraj_night', 7);
             location.reload();
         }
-        if(e.code === 'KeyP' && gameState.active) {
+        if(e.ctrlKey && e.shiftKey && e.code === 'KeyP' && gameState.active) {
             winGame(); // Skip to win
         }
         if(e.code === 'KeyL' && gameState.active) {
@@ -774,6 +776,7 @@
 
     function startGameLoop() {
         gameState.active = true;
+        exactPower = 100.0;
         sounds.fan.play().catch(()=>{});
         timerHour = setInterval(updateTime, GAME_HOUR_DURATION); 
         timerAI = setInterval(updateAI, AI_MOVE_INTERVAL);
@@ -783,11 +786,12 @@
     }
 
     function resetGame() {
-        gameState = { active: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', doors: {left:false,right:false}, lights: {left:false,right:false} };
+        gameState = { active: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
         animatronics.forEach(a => { if(a.name!=='Golden Vraj') a.location = '1A'; });
         let foxy = animatronics.find(a=>a.name==='Foxy'); foxy.location = '1C'; foxy.stage = 0; foxy.patience = 100;
         foxyRunPending = false;
         
+        clearInterval(powerTimer); powerTimer = null; exactPower = 100.0;
         goldenVrajActive = false; clearTimeout(goldenTimer); document.getElementById('golden-vraj').style.display = 'none';
         seenAtDoor = { left: false, right: false }; // Reset sightings
 
@@ -828,33 +832,34 @@
     }
 
     function startPowerDrain() {
-        clearInterval(powerTimer);
-        let drainInterval = 9600; 
-        
         let usage = 1;
         if(gameState.doors.left) usage++; if(gameState.doors.right) usage++;
         if(gameState.lights.left) usage++; if(gameState.lights.right) usage++;
         if(gameState.cameraOpen) usage++;
         
-        if(usage === 2) drainInterval = 4800;
-        if(usage === 3) drainInterval = 2500; // Significantly faster with 2 doors closed
-        if(usage === 4) drainInterval = 1500;
-        if(usage >= 5) drainInterval = 1000;
-
-        let displayUsage = Math.min(usage, 4);
         gameState.usage = usage; 
+        let displayUsage = Math.min(usage, 4);
         updateUsageUI(displayUsage);
 
-        powerTimer = setInterval(() => {
-            if(!gameState.active) return;
-            gameState.power--;
-            document.getElementById('power-display').innerText = `Power: ${gameState.power}%`;
-            if(gameState.power <= 0) { 
-                gameState.power = 0; 
-                clearInterval(powerTimer); 
-                triggerPowerOutage(); 
-            }
-        }, drainInterval);
+        if (!powerTimer && gameState.active) {
+            powerTimer = setInterval(() => {
+                if(!gameState.active) return;
+                
+                // Exact FNAF 1 proportional drain logic. 
+                // 1 bar = 9.6 seconds to drop 1% -> 1/96th drop per 100ms.
+                exactPower -= (gameState.usage / 96);
+                gameState.power = Math.ceil(exactPower);
+                
+                if(gameState.power <= 0) { 
+                    gameState.power = 0; exactPower = 0;
+                    document.getElementById('power-display').innerText = `Power: 0%`;
+                    clearInterval(powerTimer); powerTimer = null;
+                    triggerPowerOutage(); 
+                } else {
+                    document.getElementById('power-display').innerText = `Power: ${gameState.power}%`;
+                }
+            }, 100);
+        }
     }
 
     function updateAI() {
@@ -954,8 +959,21 @@
         setTimeout(() => {
              if(gameState.active) {
                  if(gameState.doors.left) { 
-                     gameState.power -= 5; playSound('bang'); 
-                     document.getElementById('power-display').innerText = `Power: ${gameState.power}%`;
+                     gameState.foxyBangs++;
+                     let penalty = 1 + ((gameState.foxyBangs - 1) * 5); // 1%, 6%, 11%, 16%...
+                     exactPower -= penalty;
+                     gameState.power = Math.ceil(exactPower);
+                     
+                     playSound('bang'); 
+                     
+                     if (gameState.power <= 0) {
+                         gameState.power = 0; exactPower = 0;
+                         document.getElementById('power-display').innerText = `Power: 0%`;
+                         triggerPowerOutage();
+                     } else {
+                         document.getElementById('power-display').innerText = `Power: ${gameState.power}%`;
+                     }
+                     
                      foxy.stage = Math.random() > 0.5 ? 0 : 1; 
                      foxy.location = '1C'; foxy.patience = 100;
                  } else { triggerJumpscare(foxy); }
@@ -1138,7 +1156,9 @@
     }
 
     function triggerPowerOutage() {
+        if(!gameState.active && gameState.power > 0) return;
         gameState.active = false;
+        clearInterval(powerTimer); powerTimer = null;
         playSound('power'); sounds.fan.pause();
         closeCameraImmediate(); document.getElementById('office').style.background = '#000';
         document.getElementById('office').style.backgroundImage = 'none';
@@ -1156,7 +1176,7 @@
         gameState.active = false;
         sounds.fan.pause(); playSound('jump');
         
-        clearInterval(timerHour); clearInterval(powerTimer); clearInterval(timerAI);
+        clearInterval(timerHour); clearInterval(powerTimer); clearInterval(timerAI); powerTimer = null;
         // Do not close camera here, so jumpscare overlays wherever you are currently looking
         document.getElementById('monitor-opener').style.display='none';
         
@@ -1193,7 +1213,7 @@
 
         if(!isCustomNight && currentNight < 7) localStorage.setItem('vraj_night', currentNight+1);
         
-        clearInterval(timerHour); clearInterval(powerTimer); clearInterval(timerAI);
+        clearInterval(timerHour); clearInterval(powerTimer); clearInterval(timerAI); powerTimer = null;
         closeCameraImmediate(); document.getElementById('monitor-opener').style.display='none';
         
         document.getElementById('win-screen').classList.remove('hidden');
