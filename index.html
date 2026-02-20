@@ -57,7 +57,7 @@
         background-size: cover; pointer-events: none; z-index: 10;
         animation: staticCycle 0.2s infinite;
     }
-    /* Static Overlay Layer for 9 & 10 (Now reduced frequency) */
+    /* Static Overlay Layer for 9 & 10 */
     .static-anim::after {
         content: "";
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -87,7 +87,7 @@
     }
 
     .menu-left {
-        width: 40%; height: 100%; display: flex; flex-direction: column;
+        width: 30%; height: 100%; display: flex; flex-direction: column;
         justify-content: center; padding-left: 50px; z-index: 1002;
     }
     .menu-title {
@@ -108,16 +108,24 @@
         text-shadow: 2px 2px 0 #000;
     }
     button.menu-btn:hover { color: #fff; transform: translateX(10px); }
+    button.menu-btn:disabled { color: #555 !important; cursor: not-allowed !important; transform: none !important; }
     
     .menu-night-display { 
         font-size: 1.2rem; color: #666; margin-top: 10px; 
         transition: 0.1s; font-weight: bold;
     }
     
-    .menu-right { width: 60%; height: 100%; position: relative; overflow: hidden; z-index: 1; }
+    .menu-right { width: 70%; height: 100%; position: absolute; right: 0; top: 0; overflow: hidden; z-index: 1; pointer-events: none;}
+    
     #menu-animatronic {
         position: absolute; top: 10%; right: 0; width: 90%; height: 90%;
-        object-fit: contain; opacity: 0.8; 
+        object-fit: contain; opacity: 0.5; 
+        animation: fadeInVraj 2s ease-in-out forwards;
+    }
+
+    @keyframes fadeInVraj {
+        0% { opacity: 0; }
+        100% { opacity: 0.5; }
     }
 
     #reset-progress-btn {
@@ -127,6 +135,53 @@
         opacity: 0.5; cursor: pointer; z-index: 2000; text-transform: uppercase;
     }
     #reset-progress-btn:hover { opacity: 1; }
+
+    /* --- SOCIAL & FIREBASE PANEL (Full Height Right Side) --- */
+    #social-panel {
+        position: absolute; right: 0; top: 0; 
+        width: 360px; height: 100%;
+        background: rgba(10, 10, 10, 0.85); border-left: 2px solid #333;
+        z-index: 1005; display: flex; flex-direction: column; padding: 15px;
+        box-sizing: border-box; box-shadow: -5px 0 20px #000; pointer-events: auto;
+    }
+    .social-section { margin-bottom: 15px; display: flex; flex-direction: column; }
+    .social-section h3 {
+        margin: 0 0 5px 0; font-size: 1.2rem; color: #aaa; text-align: center;
+        border-bottom: 1px solid #444; padding-bottom: 5px; text-shadow: 1px 1px 0 #000;
+    }
+    .social-input-row { display: flex; gap: 5px; }
+    .social-input {
+        flex-grow: 1; background: #000; color: #fff; border: 1px solid #555;
+        padding: 8px; font-weight: bold; outline: none;
+    }
+    .social-input:focus { border-color: #fff; }
+    .social-btn {
+        background: #222; color: #fff; border: 1px solid #555; cursor: pointer;
+        font-weight: bold; padding: 5px 15px; transition: 0.1s;
+    }
+    .social-btn:hover { background: #fff; color: #000; }
+    #chat-box, #leaderboard-box {
+        background: rgba(0,0,0,0.8); border: 1px solid #444; border-radius: 4px;
+        overflow-y: auto; margin-bottom: 5px; padding: 10px;
+        font-size: 0.9rem; word-wrap: break-word; box-shadow: inset 0 0 10px #000;
+    }
+    #chat-box { flex-grow: 1; height: 0; }
+    #leaderboard-box { height: 250px; }
+
+    /* GLOBAL NOTIFICATIONS */
+    .global-notif {
+        position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.85); border: 2px solid #555; border-radius: 5px;
+        color: #fff; padding: 10px 20px; font-weight: bold; font-size: 1.2rem;
+        z-index: 99999; pointer-events: none; text-shadow: 2px 2px 0 #000;
+        animation: slideFadeNotif 4s forwards; white-space: nowrap; box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+    }
+    @keyframes slideFadeNotif {
+        0% { top: -50px; opacity: 0; }
+        10% { top: 10px; opacity: 1; }
+        80% { top: 10px; opacity: 1; }
+        100% { top: -50px; opacity: 0; }
+    }
 
     /* CUSTOM NIGHT MENU */
     #custom-night-menu {
@@ -146,7 +201,6 @@
         border: 4px solid #555; margin-bottom: 15px; background: #111; 
     }
     
-    /* Remove arrows from number inputs and center text */
     .cn-input::-webkit-outer-spin-button,
     .cn-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .cn-input {
@@ -183,7 +237,6 @@
     /* NEW VIOLENT JUMPSCARE ANIMATION */
     #jumpscare-anim {
         width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;
-        /* Instant 50ms lunge, then chaotic 50ms looping shake */
         animation: lungeIn 0.05s ease-out forwards, crazyShake 0.05s 0.05s infinite;
         z-index: 9998;
     }
@@ -222,14 +275,39 @@
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         pointer-events: none; z-index: 300; 
     }
-    .hud-text { position: absolute; font-size: 1.5rem; font-weight: bold; text-shadow: 1px 1px 0 #000; }
+    .hud-text { position: absolute; font-size: 1.5rem; font-weight: bold; text-shadow: 1px 1px 0 #000; pointer-events: none;}
     #time-display { top: 20px; right: 30px; }
     #night-display { top: 50px; right: 30px; font-size: 1rem; }
     #power-display { bottom: 55px; left: 30px; }
-    #usage-label { position: absolute; bottom: 25px; left: 30px; font-weight: bold; font-size: 1.2rem; }
-    #usage-box { position: absolute; bottom: 28px; left: 110px; display: flex; gap: 4px; }
+    #usage-label { position: absolute; bottom: 25px; left: 30px; font-weight: bold; font-size: 1.2rem; pointer-events: none;}
+    #usage-box { position: absolute; bottom: 28px; left: 110px; display: flex; gap: 4px; pointer-events: none;}
     .usage-bar { width: 15px; height: 20px; background: #222; border: 1px solid #555; }
     .usage-active { background: #0f0; box-shadow: 0 0 5px #0f0; }
+
+    /* MUTE CALL BUTTON (Fixed to screen viewport, strictly stationary, left 49%) */
+    #mute-call-btn {
+        position: fixed; bottom: 100px; left: 49%; transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.6); border: 2px solid #555; border-radius: 5px;
+        color: #fff; font-size: 1.5rem; padding: 10px 20px; font-weight: bold;
+        cursor: pointer; z-index: 9995; display: none; text-shadow: 2px 2px 0 #000;
+        transition: background 0.1s, border-color 0.1s; pointer-events: auto;
+    }
+    #mute-call-btn:hover { background: rgba(255, 255, 255, 0.2); border-color: #fff; }
+
+    /* IN-GAME CHAT (Fixed to screen viewport, strictly stationary) */
+    #in-game-chat-container {
+        position: fixed; top: 40px; left: 50%; transform: translateX(-50%);
+        width: 300px; display: none; flex-direction: column; z-index: 9995; pointer-events: auto;
+    }
+    #in-game-chat-box {
+        background: rgba(0,0,0,0.5); height: 100px; overflow-y: auto;
+        border: 2px solid #555; padding: 5px; margin-bottom: 5px; font-size: 0.9rem;
+        box-shadow: inset 0 0 10px #000; word-wrap: break-word; text-shadow: 1px 1px 0 #000;
+    }
+    #in-game-chat-input {
+        background: rgba(0,0,0,0.8); color: #fff; border: 2px solid #555;
+        padding: 5px; font-weight: bold; width: 100%; box-sizing: border-box; outline: none;
+    }
 
     /* --- OFFICE --- */
     #office {
@@ -336,7 +414,7 @@
         z-index: 200; display: flex; justify-content: center; align-items: center;
         opacity: 0.3; transition: opacity 0.2s; cursor: pointer;
         border: 2px solid #555; background: rgba(255,255,255,0.05);
-        border-top-left-radius: 10px; border-top-right-radius: 10px;
+        border-top-left-radius: 10px; border-top-right-radius: 10px; pointer-events: auto;
     }
     .trigger-bar:hover { opacity: 0.9; background: rgba(255,255,255,0.2); }
     .arrow-container { width: 100%; display: flex; justify-content: space-between; padding: 0 40px; }
@@ -391,6 +469,13 @@
 </head>
 <body oncontextmenu="return false;" ondragstart="return false;">
 
+<div id="mute-call-btn" onclick="muteCall()">MUTE CALL</div>
+
+<div id="in-game-chat-container">
+    <div id="in-game-chat-box"></div>
+    <input type="text" id="in-game-chat-input" placeholder="Press Enter to chat..." maxlength="60">
+</div>
+
 <div id="loading-screen">
     <div id="loading-text">LOADING...</div>
     <div id="loading-bar-container"><div id="loading-bar"></div></div>
@@ -411,9 +496,37 @@
         <div class="menu-options">
             <button class="menu-btn" onclick="startNewGame()">New Game</button>
             <button class="menu-btn" onclick="continueGame()">Continue</button>
+            <button class="menu-btn hidden" id="btn-endless" onclick="startEndlessMode()">Endless Mode</button>
             <div class="menu-night-display" id="menu-night-text">Night 1</div>
         </div>
     </div>
+    
+    <div id="social-panel">
+        <div class="social-section">
+            <h3>PLAYER PROFILE</h3>
+            <div class="social-input-row">
+                <input type="text" id="player-name-input" class="social-input" placeholder="Display Name..." maxlength="15">
+                <button id="save-name-btn" class="social-btn">SAVE</button>
+            </div>
+        </div>
+
+        <div class="social-section" style="flex-grow: 1; display: flex; flex-direction: column;">
+            <h3>GLOBAL CHAT</h3>
+            <div id="chat-box"><div style="color:#555; text-align:center; margin-top:20px;">Loading Chat...</div></div>
+            <div class="social-input-row">
+                <input type="text" id="chat-input" class="social-input" placeholder="Type message... (Enter to send)" maxlength="60">
+                <button id="send-chat-btn" class="social-btn">SEND</button>
+            </div>
+        </div>
+
+        <div class="social-section">
+            <h3>ENDLESS LEADERBOARD</h3>
+            <div id="leaderboard-box">
+                <div style="color:#555; text-align:center; margin-top:20px;">Loading Scores...</div>
+            </div>
+        </div>
+    </div>
+
     <div class="menu-right"><img id="menu-animatronic" src="textures/menu1.png"></div>
     <button id="reset-progress-btn" onclick="resetProgress()">Reset Progress</button>
 </div>
@@ -468,8 +581,15 @@
     <video id="intermission-video" style="width:100%; height:100%; object-fit:cover;"></video>
 </div>
 
+<div id="ui-layer">
+    <div id="time-display" class="hud-text">12 AM</div><div id="night-display" class="hud-text">Night 1</div>
+    <div id="power-display" class="hud-text">Power: 100%</div><div id="usage-label">Usage:</div>
+    <div id="usage-box"><div class="usage-bar" id="bar1"></div><div class="usage-bar" id="bar2"></div><div class="usage-bar" id="bar3"></div><div class="usage-bar" id="bar4"></div></div>
+</div>
+
 <div id="office">
     <img id="golden-vraj" src="textures/vrajs/golden.png">
+    
     <div class="wall-section" id="wall-left">
         <div class="window-frame"><div class="window-glass" id="window-left"></div></div>
         <div class="control-panel">
@@ -490,12 +610,6 @@
 </div>
 
 <div class="trigger-bar" id="monitor-opener" onmouseenter="toggleMonitor()"><div class="arrow-container"><div class="trigger-arrow">&gt;&gt;</div><div class="trigger-arrow">&lt;&lt;</div></div></div>
-
-<div id="ui-layer">
-    <div id="time-display" class="hud-text">12 AM</div><div id="night-display" class="hud-text">Night 1</div>
-    <div id="power-display" class="hud-text">Power: 100%</div><div id="usage-label">Usage:</div>
-    <div id="usage-box"><div class="usage-bar" id="bar1"></div><div class="usage-bar" id="bar2"></div><div class="usage-bar" id="bar3"></div><div class="usage-bar" id="bar4"></div></div>
-</div>
 
 <div id="camera-system">
     <div class="static-anim static-transparent"></div>
@@ -540,7 +654,7 @@
     
     const imageList = [
         'textures/office.png', 'textures/door.png', 'textures/help.png', 
-        'textures/menu1.png', 'textures/menu2.png',
+        'textures/menu1.png', 'textures/menu2.png', 'textures/menu3.png',
         'textures/static1.png', 'textures/static2.png', 'textures/static3.png',
         'textures/static4.png', 'textures/static5.png', 'textures/static6.png',
         'textures/static7.png', 'textures/static8.png', 'textures/static9.png', 'textures/static10.png',
@@ -571,7 +685,8 @@
         jump: new Audio('sounds/jumpscare.mp3'),
         win: new Audio('sounds/6am.mp3'),
         menuMusic: new Audio('sounds/menu_music.mp3'),
-        surprise: new Audio('sounds/suprise.mp3') // NEW SURPRISE SOUND
+        surprise: new Audio('sounds/suprise.mp3'), 
+        hangup: new Audio('sounds/hangup.mp3') 
     };
     
     sounds.fan.loop = true; sounds.fan.volume = 0.05; sounds.fan.preload = 'auto';
@@ -579,6 +694,7 @@
     sounds.light.loop = true; sounds.light.preload = 'auto';
     sounds.menuMusic.loop = true; sounds.menuMusic.preload = 'auto';
     if(sounds.surprise) sounds.surprise.preload = 'auto';
+    if(sounds.hangup) sounds.hangup.preload = 'auto';
 
     let assetsLoaded = 0;
     const totalAssets = imageList.length;
@@ -606,11 +722,25 @@
         
         let displayNight = currentNight;
         document.getElementById('menu-night-text').innerText = `Night ${displayNight}`;
+        
+        let btnEndless = document.getElementById('btn-endless');
+        btnEndless.classList.remove('hidden');
+        if (currentNight >= 6) {
+            btnEndless.innerText = "Endless Mode";
+            btnEndless.disabled = false;
+        } else {
+            btnEndless.innerText = "Endless Mode (Locked)";
+            btnEndless.disabled = true;
+        }
     }
 
     function resetProgress() {
         if (confirm("Are you sure you want to reset all progress?")) {
+            let pName = localStorage.getItem('vraj_playerName');
+            let uId = localStorage.getItem('vraj_userId');
             localStorage.clear();
+            if(pName) localStorage.setItem('vraj_playerName', pName);
+            if(uId) localStorage.setItem('vraj_userId', uId);
             location.reload();
         }
     }
@@ -622,9 +752,17 @@
     let goldenVrajActive = false; let goldenTimer = null;
     let foxyRunPending = false;
     
+    let isEndlessMode = false;
+    let endlessSeconds = 0;
+    let endlessInterval = null;
+
     let powerTimer = null;
     let exactPower = 100.0;
     
+    let currentCallAudio = null;
+    let callTimeout = null;
+    let muteBtnTimeout = null;
+
     // Surprise sound logic trackers
     let seenAtDoor = { left: false, right: false };
 
@@ -662,15 +800,16 @@
 
     // DEBUG CHEATS & HOTKEYS
     document.addEventListener('keydown', (e) => {
+        if(e.target.tagName === 'INPUT') return;
+
         if(e.ctrlKey && e.shiftKey && e.code === 'KeyO') {
             localStorage.setItem('vraj_night', 7);
             location.reload();
         }
         if(e.ctrlKey && e.shiftKey && e.code === 'KeyP' && gameState.active) {
-            winGame(); // Skip to win
+            if (!isEndlessMode) winGame(); 
         }
         if(e.code === 'KeyL' && gameState.active) {
-            // Random Jumpscare for testing
             let availableBots = animatronics.filter(a => a.name !== 'Golden Vraj');
             let randomBot = availableBots[Math.floor(Math.random() * availableBots.length)];
             triggerJumpscare(randomBot);
@@ -687,7 +826,7 @@
     timerMenuAnim = setInterval(() => {
         const img = document.getElementById('menu-animatronic');
         if(Math.random() > 0.7) {
-            img.src = 'textures/menu2.png';
+            img.src = Math.random() > 0.5 ? 'textures/menu2.png' : 'textures/menu3.png';
             setTimeout(() => { img.src = 'textures/menu1.png'; }, 80);
         }
     }, 800);
@@ -713,7 +852,7 @@
 
     function startNewGame() { 
         triggerTransitionStatic(() => {
-            currentNight = 1; localStorage.setItem('vraj_night', 1); isCustomNight = false; launchNight(); 
+            currentNight = 1; localStorage.setItem('vraj_night', 1); isCustomNight = false; isEndlessMode = false; launchNight(); 
         });
     }
     
@@ -724,6 +863,7 @@
         }
         if(currentNight > 5 && currentNight < 7) currentNight = 6; 
         isCustomNight = false; 
+        isEndlessMode = false;
         triggerTransitionStatic(() => { launchNight(); });
     }
     
@@ -741,6 +881,7 @@
 
     function startCustomNight() {
         isCustomNight = true;
+        isEndlessMode = false;
         let b = parseInt(document.getElementById('ai-bonnie').value)||0; 
         let c = parseInt(document.getElementById('ai-chica').value)||0;
         let f = parseInt(document.getElementById('ai-freddy').value)||0; 
@@ -751,6 +892,14 @@
         document.getElementById('custom-night-menu').classList.add('hidden'); 
         triggerTransitionStatic(() => { launchNight(); });
     }
+
+    function startEndlessMode() {
+        isEndlessMode = true;
+        isCustomNight = false;
+        document.getElementById('menu-screen').classList.add('hidden');
+        triggerTransitionStatic(() => { launchNight(); });
+    }
+
     function returnToMenu() { location.reload(); }
 
     function launchNight() {
@@ -759,12 +908,16 @@
         document.getElementById('win-screen').classList.add('hidden'); 
         document.getElementById('game-over-screen').style.display = 'none';
         
-        let levels = NIGHT_DIFFICULTY[currentNight] || [20,20,20,20,20];
-        animatronics.forEach((a, i) => a.level = levels[i]);
+        if (isEndlessMode) {
+            animatronics.forEach(a => { if (a.name !== 'Golden Vraj') a.level = 5; });
+        } else {
+            let levels = NIGHT_DIFFICULTY[currentNight] || [20,20,20,20,20];
+            animatronics.forEach((a, i) => a.level = levels[i]);
+        }
         
         resetGame();
 
-        if (currentNight === 1 && !isCustomNight) {
+        if (currentNight === 1 && !isCustomNight && !isEndlessMode) {
             const help = document.getElementById('help-overlay');
             help.style.display = 'block'; help.style.opacity = 1;
             setTimeout(() => {
@@ -778,11 +931,70 @@
         gameState.active = true;
         exactPower = 100.0;
         sounds.fan.play().catch(()=>{});
-        timerHour = setInterval(updateTime, GAME_HOUR_DURATION); 
+        
+        document.getElementById('in-game-chat-container').style.display = 'flex';
+        
+        if (isEndlessMode) {
+            endlessSeconds = 0;
+            updateEndlessDisplay();
+            endlessInterval = setInterval(updateEndlessTime, 1000);
+        } else {
+            timerHour = setInterval(updateTime, GAME_HOUR_DURATION); 
+        }
+        
         timerAI = setInterval(updateAI, AI_MOVE_INTERVAL);
         startPowerDrain(); 
         requestAnimationFrame(scrollLoop); 
         renderCamera();
+
+        // Phone Call Logic
+        if (!isCustomNight && !isEndlessMode && currentNight <= 6) {
+            callTimeout = setTimeout(() => {
+                if (gameState.active && gameState.power > 0) {
+                    currentCallAudio = new Audio(`sounds/call${currentNight}.mp3`);
+                    currentCallAudio.play().catch(e => console.log("No call audio for this night."));
+                    
+                    muteBtnTimeout = setTimeout(() => {
+                        if (gameState.active && currentCallAudio && !currentCallAudio.paused) {
+                            document.getElementById('mute-call-btn').style.display = 'block';
+                        }
+                    }, 2000);
+
+                    currentCallAudio.onended = () => {
+                        document.getElementById('mute-call-btn').style.display = 'none';
+                    };
+                }
+            }, 5000);
+        }
+    }
+
+    function muteCall() {
+        if (currentCallAudio) {
+            currentCallAudio.pause();
+            currentCallAudio.currentTime = 0;
+        }
+        playSound('hangup');
+        document.getElementById('mute-call-btn').style.display = 'none';
+    }
+
+    function updateEndlessTime() {
+        if(!gameState.active) return;
+        endlessSeconds++;
+        updateEndlessDisplay();
+        
+        if (endlessSeconds % 60 === 0) {
+            animatronics.forEach(a => { 
+                if (a.name !== 'Golden Vraj') {
+                    a.level++; 
+                }
+            });
+        }
+    }
+
+    function updateEndlessDisplay() {
+        let m = String(Math.floor(endlessSeconds / 60)).padStart(2, '0');
+        let s = String(endlessSeconds % 60).padStart(2, '0');
+        document.getElementById('time-display').innerText = `${m}:${s}`;
     }
 
     function resetGame() {
@@ -792,11 +1004,25 @@
         foxyRunPending = false;
         
         clearInterval(powerTimer); powerTimer = null; exactPower = 100.0;
+        clearInterval(endlessInterval); endlessInterval = null;
+
+        if (currentCallAudio) { currentCallAudio.pause(); currentCallAudio = null; }
+        clearTimeout(callTimeout); clearTimeout(muteBtnTimeout);
+        document.getElementById('mute-call-btn').style.display = 'none';
+        document.getElementById('in-game-chat-container').style.display = 'none';
+
         goldenVrajActive = false; clearTimeout(goldenTimer); document.getElementById('golden-vraj').style.display = 'none';
         seenAtDoor = { left: false, right: false }; // Reset sightings
 
-        document.getElementById('night-display').innerText = isCustomNight ? "Custom Night" : `Night ${currentNight}`;
-        document.getElementById('time-display').innerText = "12 AM"; document.getElementById('power-display').innerText = "Power: 100%";
+        if (isEndlessMode) {
+            document.getElementById('night-display').innerText = "Endless Mode";
+            document.getElementById('time-display').innerText = "00:00";
+        } else {
+            document.getElementById('night-display').innerText = isCustomNight ? "Custom Night" : `Night ${currentNight}`;
+            document.getElementById('time-display').innerText = "12 AM";
+        }
+
+        document.getElementById('power-display').innerText = "Power: 100%";
         ['left', 'right'].forEach(side => {
             document.getElementById(`shutter-${side}`).classList.remove('closed');
             document.getElementById(`btn-door-${side}`).classList.remove('btn-active-door');
@@ -892,7 +1118,7 @@
 
     function checkGoldenVrajSpawn() {
         let chance = 0.001 * currentNight;
-        if(isCustomNight) chance = 0.05; 
+        if(isCustomNight || isEndlessMode) chance = 0.05; 
         if (!goldenVrajActive && Math.random() < chance) spawnGoldenVraj();
     }
 
@@ -1160,6 +1386,11 @@
         gameState.active = false;
         clearInterval(powerTimer); powerTimer = null;
         playSound('power'); sounds.fan.pause();
+        
+        if (currentCallAudio) { currentCallAudio.pause(); currentCallAudio = null; }
+        document.getElementById('mute-call-btn').style.display = 'none';
+        document.getElementById('in-game-chat-container').style.display = 'none';
+        
         closeCameraImmediate(); document.getElementById('office').style.background = '#000';
         document.getElementById('office').style.backgroundImage = 'none';
         document.getElementById('monitor-opener').style.display = 'none';
@@ -1173,11 +1404,25 @@
 
     function triggerJumpscare(bot) {
         if(!gameState.active && bot.name!=='Freddy' && bot.name!=='Golden Vraj') return;
+        
+        if (window.submitGlobalEvent) {
+            window.submitGlobalEvent({ type: 'death', killer: bot.name });
+        }
+
+        if (isEndlessMode && window.submitEndlessScore) {
+            window.submitEndlessScore(endlessSeconds);
+        }
+
         gameState.active = false;
         sounds.fan.pause(); playSound('jump');
         
         clearInterval(timerHour); clearInterval(powerTimer); clearInterval(timerAI); powerTimer = null;
-        // Do not close camera here, so jumpscare overlays wherever you are currently looking
+        clearInterval(endlessInterval); endlessInterval = null;
+
+        if (currentCallAudio) { currentCallAudio.pause(); currentCallAudio = null; }
+        document.getElementById('mute-call-btn').style.display = 'none';
+        document.getElementById('in-game-chat-container').style.display = 'none';
+
         document.getElementById('monitor-opener').style.display='none';
         
         const s = document.getElementById('game-over-screen'); s.style.display = 'flex';
@@ -1187,7 +1432,7 @@
         document.getElementById('jumpscare-anim').innerHTML = `<img src="${tex}">`;
         
         setTimeout(() => {
-            sounds.jump.pause();             // <--- AUDIO CUTS OUT IMMEDIATELY
+            sounds.jump.pause();
             sounds.jump.currentTime = 0;
             const dStatic = document.getElementById('transition-static-death');
             dStatic.style.display = 'block';
@@ -1200,6 +1445,10 @@
         gameState.active = false;
         sounds.fan.pause(); playSound('win');
         
+        if (window.submitGlobalEvent) {
+            window.submitGlobalEvent({ type: 'win', night: currentNight });
+        }
+
         if(currentNight === 5) localStorage.setItem('vraj_star1', true);
         if(currentNight === 6) localStorage.setItem('vraj_star2', true);
         
@@ -1214,6 +1463,11 @@
         if(!isCustomNight && currentNight < 7) localStorage.setItem('vraj_night', currentNight+1);
         
         clearInterval(timerHour); clearInterval(powerTimer); clearInterval(timerAI); powerTimer = null;
+        
+        if (currentCallAudio) { currentCallAudio.pause(); currentCallAudio = null; }
+        document.getElementById('mute-call-btn').style.display = 'none';
+        document.getElementById('in-game-chat-container').style.display = 'none';
+        
         closeCameraImmediate(); document.getElementById('monitor-opener').style.display='none';
         
         document.getElementById('win-screen').classList.remove('hidden');
@@ -1271,6 +1525,188 @@
             if(i<=lvl) b.classList.add('usage-active'); else b.classList.remove('usage-active');
         }
     }
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBn2LuoY0ZqHnz2nVx3ZidRVPv3GgAYRGU",
+        authDomain: "fniv-f6e02.firebaseapp.com",
+        projectId: "fniv-f6e02",
+        storageBucket: "fniv-f6e02.firebasestorage.app",
+        messagingSenderId: "752134357498",
+        appId: "1:752134357498:web:705930bd9e349413b42443",
+        measurementId: "G-QKNGMXXLQJ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+
+    // Player Identification
+    let userId = localStorage.getItem('vraj_userId');
+    if(!userId) {
+        userId = 'uid_' + Math.random().toString(36).substr(2, 9) + Date.now();
+        localStorage.setItem('vraj_userId', userId);
+    }
+
+    let playerName = localStorage.getItem('vraj_playerName') || "Guest" + Math.floor(Math.random() * 1000);
+    document.getElementById('player-name-input').value = playerName;
+
+    // NAME UNIQUENESS LOGIC
+    document.getElementById('save-name-btn').addEventListener('click', async () => {
+        let newName = document.getElementById('player-name-input').value.trim();
+        if (newName) {
+            let lowerName = newName.toLowerCase();
+            const qCheck = query(collection(db, "fniv_users"), where("lower", "==", lowerName));
+            
+            try {
+                const snap = await getDocs(qCheck);
+                let isTaken = false;
+                snap.forEach(d => { if(d.id !== userId) isTaken = true; });
+
+                if(isTaken) {
+                    alert("Name already taken! Please choose another.");
+                } else {
+                    await setDoc(doc(db, "fniv_users", userId), { name: newName, lower: lowerName });
+                    playerName = newName;
+                    localStorage.setItem('vraj_playerName', playerName);
+                    alert("Name saved: " + playerName);
+                }
+            } catch(e) {
+                console.error("Error saving name (Ensure Firestore rules allow read/write):", e);
+                alert("Could not connect to database.");
+            }
+        }
+    });
+
+    function escapeHTML(str) {
+        return str ? str.replace(/[&<>'"]/g, tag => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+        }[tag])) : '';
+    }
+
+    // CHAT SYSTEM
+    window.submitChatMessage = async (text) => {
+        if (!text) return;
+        try {
+            await addDoc(collection(db, "fniv_chat"), {
+                name: playerName,
+                message: text,
+                timestamp: serverTimestamp()
+            });
+        } catch (e) {
+            console.error("Chat Error: ", e);
+        }
+    };
+
+    const chatBoxMenu = document.getElementById('chat-box');
+    const chatBoxInGame = document.getElementById('in-game-chat-box');
+    const qChat = query(collection(db, "fniv_chat"), orderBy("timestamp", "desc"), limit(30));
+    
+    onSnapshot(qChat, (snapshot) => {
+        chatBoxMenu.innerHTML = '';
+        chatBoxInGame.innerHTML = '';
+        let msgs = [];
+        snapshot.forEach((doc) => msgs.push(doc.data()));
+        msgs.reverse(); 
+
+        msgs.forEach(msg => {
+            let htmlStr = `<div style="margin-bottom:5px;"><strong style="color:#aaa;">${escapeHTML(msg.name)}:</strong> <span style="color:#fff;">${escapeHTML(msg.message)}</span></div>`;
+            chatBoxMenu.innerHTML += htmlStr;
+            chatBoxInGame.innerHTML += htmlStr;
+        });
+        chatBoxMenu.scrollTop = chatBoxMenu.scrollHeight;
+        chatBoxInGame.scrollTop = chatBoxInGame.scrollHeight;
+    });
+
+    document.getElementById('chat-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') document.getElementById('send-chat-btn').click();
+    });
+    document.getElementById('send-chat-btn').addEventListener('click', () => {
+        let msgInput = document.getElementById('chat-input');
+        window.submitChatMessage(msgInput.value.trim());
+        msgInput.value = '';
+    });
+
+    document.getElementById('in-game-chat-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            window.submitChatMessage(e.target.value.trim());
+            e.target.value = '';
+        }
+    });
+
+    // LEADERBOARD SYSTEM
+    const lbBox = document.getElementById('leaderboard-box');
+    const qLb = query(collection(db, "fniv_leaderboard"), orderBy("score", "desc"), limit(10));
+
+    onSnapshot(qLb, (snapshot) => {
+        lbBox.innerHTML = '';
+        let rank = 1;
+        snapshot.forEach((doc) => {
+            let data = doc.data();
+            let div = document.createElement('div');
+            div.style.marginBottom = '5px';
+            div.innerHTML = `<span style="color:gold;">#${rank}</span> <strong style="color:#aaa;">${escapeHTML(data.name)}</strong> - <span style="color:#fff;">${data.timeString}</span>`;
+            lbBox.appendChild(div);
+            rank++;
+        });
+        if(rank === 1) lbBox.innerHTML = '<div style="color:#555; text-align:center; margin-top:20px;">No scores yet.</div>';
+    });
+
+    window.submitEndlessScore = async (seconds) => {
+        if (seconds <= 0) return;
+        let m = String(Math.floor(seconds / 60)).padStart(2, '0');
+        let s = String(seconds % 60).padStart(2, '0');
+        let timeStr = `${m}:${s}`;
+        
+        try {
+            await addDoc(collection(db, "fniv_leaderboard"), {
+                name: playerName,
+                score: seconds,
+                timeString: timeStr,
+                timestamp: serverTimestamp()
+            });
+        } catch (e) { console.error("Error saving score", e); }
+    };
+
+    // GLOBAL NOTIFICATIONS (DEATHS/WINS)
+    window.submitGlobalEvent = async (eventData) => {
+        try {
+            eventData.player = playerName;
+            eventData.timestamp = serverTimestamp();
+            await addDoc(collection(db, "fniv_events"), eventData);
+        } catch(e) { console.error("Event Error: ", e); }
+    };
+
+    const qEvents = query(collection(db, "fniv_events"), orderBy("timestamp", "desc"), limit(1));
+    let firstEventLoad = true;
+    onSnapshot(qEvents, (snapshot) => {
+        if(firstEventLoad) { firstEventLoad = false; return; }
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+                let data = change.doc.data();
+                if(!data.player) return; 
+                
+                let msg = "";
+                if(data.type === 'death') msg = `💀 ${escapeHTML(data.player)} was killed by ${escapeHTML(data.killer)}`;
+                else if(data.type === 'win') msg = `🏆 ${escapeHTML(data.player)} survived Night ${data.night}!`;
+                else return;
+
+                let notif = document.createElement('div');
+                notif.className = 'global-notif';
+                notif.innerHTML = msg;
+                document.body.appendChild(notif);
+                
+                setTimeout(() => { 
+                    if(notif.parentNode) notif.parentNode.removeChild(notif); 
+                }, 4000);
+            }
+        });
+    });
 </script>
 </body>
 </html>
