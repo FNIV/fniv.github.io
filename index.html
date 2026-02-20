@@ -117,15 +117,10 @@
     
     .menu-right { width: 70%; height: 100%; position: absolute; right: 0; top: 0; overflow: hidden; z-index: 1; pointer-events: none;}
     
+    @keyframes fadeInVraj { from { opacity: 0; } to { opacity: 0.5; } }
     #menu-animatronic {
         position: absolute; top: 10%; right: 0; width: 90%; height: 90%;
-        object-fit: contain; opacity: 0.5; 
-        animation: fadeInVraj 2s ease-in-out forwards;
-    }
-
-    @keyframes fadeInVraj {
-        0% { opacity: 0; }
-        100% { opacity: 0.5; }
+        object-fit: contain; opacity: 0.5; animation: fadeInVraj 2s ease-in-out;
     }
 
     #reset-progress-btn {
@@ -148,6 +143,7 @@
     .social-section h3 {
         margin: 0 0 5px 0; font-size: 1.2rem; color: #aaa; text-align: center;
         border-bottom: 1px solid #444; padding-bottom: 5px; text-shadow: 1px 1px 0 #000;
+        position: relative;
     }
     .social-input-row { display: flex; gap: 5px; }
     .social-input {
@@ -160,28 +156,30 @@
         font-weight: bold; padding: 5px 15px; transition: 0.1s;
     }
     .social-btn:hover { background: #fff; color: #000; }
-    #chat-box, #leaderboard-box {
+    
+    #chat-box, #history-box, #leaderboard-box {
         background: rgba(0,0,0,0.8); border: 1px solid #444; border-radius: 4px;
         overflow-y: auto; margin-bottom: 5px; padding: 10px;
         font-size: 0.9rem; word-wrap: break-word; box-shadow: inset 0 0 10px #000;
     }
-    #chat-box { flex-grow: 1; height: 0; }
+    #chat-box, #history-box { flex-grow: 1; height: 0; }
     #leaderboard-box { height: 250px; }
+    
+    .tab-header { display: flex; justify-content: space-around; border-bottom: 1px solid #444; margin-bottom: 5px; padding-bottom: 5px; }
+    .tab-btn { cursor: pointer; font-size: 1.1rem; font-weight: bold; color: #555; transition: 0.1s; }
+    .tab-btn.active { color: #aaa; text-shadow: 1px 1px 0 #000; }
+    .tab-btn:hover { color: #fff; }
 
-    /* GLOBAL NOTIFICATIONS */
-    .global-notif {
-        position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.85); border: 2px solid #555; border-radius: 5px;
-        color: #fff; padding: 10px 20px; font-weight: bold; font-size: 1.2rem;
-        z-index: 99999; pointer-events: none; text-shadow: 2px 2px 0 #000;
-        animation: slideFadeNotif 4s forwards; white-space: nowrap; box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+    /* GLOBAL NOTIFICATION */
+    #global-notification {
+        position: fixed; top: -60px; left: 50%; transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.9); border: 2px solid #555; color: #fff;
+        padding: 10px 25px; font-weight: bold; font-size: 1.1rem; border-radius: 5px;
+        z-index: 10000; transition: top 0.5s ease-out, opacity 0.5s ease-out;
+        text-shadow: 1px 1px 0 #000; box-shadow: 0 5px 15px rgba(0,0,0,0.9);
+        pointer-events: none; opacity: 0; text-align: center;
     }
-    @keyframes slideFadeNotif {
-        0% { top: -50px; opacity: 0; }
-        10% { top: 10px; opacity: 1; }
-        80% { top: 10px; opacity: 1; }
-        100% { top: -50px; opacity: 0; }
-    }
+    .notif-show { top: 20px !important; opacity: 1 !important; }
 
     /* CUSTOM NIGHT MENU */
     #custom-night-menu {
@@ -234,7 +232,6 @@
         justify-content: center; align-items: center; overflow: hidden;
     }
     
-    /* NEW VIOLENT JUMPSCARE ANIMATION */
     #jumpscare-anim {
         width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;
         animation: lungeIn 0.05s ease-out forwards, crazyShake 0.05s 0.05s infinite;
@@ -284,20 +281,19 @@
     .usage-bar { width: 15px; height: 20px; background: #222; border: 1px solid #555; }
     .usage-active { background: #0f0; box-shadow: 0 0 5px #0f0; }
 
-    /* MUTE CALL BUTTON (Fixed to screen viewport, strictly stationary, left 49%) */
+    /* IN-GAME ELEMENTS (Anchored inside the panning office room) */
     #mute-call-btn {
-        position: fixed; bottom: 100px; left: 49%; transform: translateX(-50%);
+        position: absolute; bottom: 100px; left: 49%; transform: translateX(-50%);
         background: rgba(0, 0, 0, 0.6); border: 2px solid #555; border-radius: 5px;
         color: #fff; font-size: 1.5rem; padding: 10px 20px; font-weight: bold;
-        cursor: pointer; z-index: 9995; display: none; text-shadow: 2px 2px 0 #000;
+        cursor: pointer; z-index: 20; display: none; text-shadow: 2px 2px 0 #000;
         transition: background 0.1s, border-color 0.1s; pointer-events: auto;
     }
     #mute-call-btn:hover { background: rgba(255, 255, 255, 0.2); border-color: #fff; }
 
-    /* IN-GAME CHAT (Fixed to screen viewport, strictly stationary) */
     #in-game-chat-container {
-        position: fixed; top: 40px; left: 50%; transform: translateX(-50%);
-        width: 300px; display: none; flex-direction: column; z-index: 9995; pointer-events: auto;
+        position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
+        width: 300px; display: none; flex-direction: column; z-index: 20; pointer-events: auto;
     }
     #in-game-chat-box {
         background: rgba(0,0,0,0.5); height: 100px; overflow-y: auto;
@@ -353,7 +349,6 @@
         border-color: #fff; transform: translateY(4px); 
     }
 
-    /* UPGRADED WINDOW STYLES */
     .window-frame {
         width: 80%; height: 25%; margin-bottom: 20px;
         position: relative; overflow: hidden; pointer-events: auto;
@@ -378,7 +373,6 @@
     }
     .shadow-img { width: 90%; height: 90%; object-fit: contain; filter: brightness(0); opacity: 0.95; }
 
-    /* UPGRADED DOORWAY STYLES */
     .doorway {
         position: absolute; top: 15%; height: 70%; width: 15%; z-index: 1;
         display: flex; justify-content: center; align-items: center;
@@ -420,16 +414,8 @@
     .arrow-container { width: 100%; display: flex; justify-content: space-between; padding: 0 40px; }
     .trigger-arrow { color: #fff; font-size: 3rem; text-shadow: 2px 2px 0 #000; letter-spacing: -5px; font-weight: bold; }
 
-    #golden-vraj {
-        position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); 
-        width: 40%; height: 60%; object-fit: contain; z-index: 12; display: none;
-        animation: twitch 0.1s infinite;
-    }
-    @keyframes twitch { 0% { transform: translate(-50%,0); } 50% { transform: translate(calc(-50% + 2px), -2px); } }
-
     #camera-system { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 150; display: none; }
     
-    /* SCALED UP CAMERA MAP */
     #map-ui { 
         position: absolute; bottom: 80px; right: 30px; width: 320px; height: 260px; z-index: 200; 
         transform: scale(1.3); transform-origin: bottom right; 
@@ -469,11 +455,8 @@
 </head>
 <body oncontextmenu="return false;" ondragstart="return false;">
 
-<div id="mute-call-btn" onclick="muteCall()">MUTE CALL</div>
-
-<div id="in-game-chat-container">
-    <div id="in-game-chat-box"></div>
-    <input type="text" id="in-game-chat-input" placeholder="Press Enter to chat..." maxlength="60">
+<div id="global-notification">
+    <span id="global-notif-text"></span>
 </div>
 
 <div id="loading-screen">
@@ -496,14 +479,19 @@
         <div class="menu-options">
             <button class="menu-btn" onclick="startNewGame()">New Game</button>
             <button class="menu-btn" onclick="continueGame()">Continue</button>
-            <button class="menu-btn hidden" id="btn-endless" onclick="startEndlessMode()">Endless Mode</button>
+            <button class="menu-btn" id="btn-endless" onclick="startEndlessMode()">Endless Mode</button>
             <div class="menu-night-display" id="menu-night-text">Night 1</div>
         </div>
     </div>
     
     <div id="social-panel">
         <div class="social-section">
-            <h3>PLAYER PROFILE</h3>
+            <h3 style="position:relative;">PLAYER PROFILE
+                <div style="position:absolute; right:0; top:0; font-size:1rem; color:#fff; display:flex; align-items:center; gap:5px;">
+                    <span style="width:10px; height:10px; background-color:#0f0; border-radius:50%; box-shadow:0 0 5px #0f0;"></span>
+                    <span id="online-count">1</span>
+                </div>
+            </h3>
             <div class="social-input-row">
                 <input type="text" id="player-name-input" class="social-input" placeholder="Display Name..." maxlength="15">
                 <button id="save-name-btn" class="social-btn">SAVE</button>
@@ -511,9 +499,15 @@
         </div>
 
         <div class="social-section" style="flex-grow: 1; display: flex; flex-direction: column;">
-            <h3>GLOBAL CHAT</h3>
+            <div class="tab-header">
+                <div class="tab-btn active" id="tab-chat" onclick="switchSocialTab('chat')">GLOBAL CHAT</div>
+                <div class="tab-btn" id="tab-history" onclick="switchSocialTab('history')">HISTORY</div>
+            </div>
+            
             <div id="chat-box"><div style="color:#555; text-align:center; margin-top:20px;">Loading Chat...</div></div>
-            <div class="social-input-row">
+            <div id="history-box" class="hidden"><div style="color:#555; text-align:center; margin-top:20px;">Loading History...</div></div>
+            
+            <div class="social-input-row" id="chat-input-row">
                 <input type="text" id="chat-input" class="social-input" placeholder="Type message... (Enter to send)" maxlength="60">
                 <button id="send-chat-btn" class="social-btn">SEND</button>
             </div>
@@ -589,6 +583,13 @@
 
 <div id="office">
     <img id="golden-vraj" src="textures/vrajs/golden.png">
+    
+    <div id="mute-call-btn" onclick="muteCall()">MUTE CALL</div>
+    
+    <div id="in-game-chat-container">
+        <div id="in-game-chat-box"></div>
+        <input type="text" id="in-game-chat-input" placeholder="Press Enter to chat..." maxlength="60">
+    </div>
     
     <div class="wall-section" id="wall-left">
         <div class="window-frame"><div class="window-glass" id="window-left"></div></div>
@@ -736,19 +737,31 @@
 
     function resetProgress() {
         if (confirm("Are you sure you want to reset all progress?")) {
-            let pName = localStorage.getItem('vraj_playerName');
-            let uId = localStorage.getItem('vraj_userId');
             localStorage.clear();
-            if(pName) localStorage.setItem('vraj_playerName', pName);
-            if(uId) localStorage.setItem('vraj_userId', uId);
             location.reload();
         }
     }
 
+    window.switchSocialTab = function(tab) {
+        if(tab === 'chat') {
+            document.getElementById('chat-box').classList.remove('hidden');
+            document.getElementById('history-box').classList.add('hidden');
+            document.getElementById('chat-input-row').style.display = 'flex';
+            document.getElementById('tab-chat').classList.add('active');
+            document.getElementById('tab-history').classList.remove('active');
+        } else {
+            document.getElementById('chat-box').classList.add('hidden');
+            document.getElementById('history-box').classList.remove('hidden');
+            document.getElementById('chat-input-row').style.display = 'none';
+            document.getElementById('tab-chat').classList.remove('active');
+            document.getElementById('tab-history').classList.add('active');
+        }
+    };
+
     preloadAssets();
 
     let currentNight = parseInt(localStorage.getItem('vraj_night')) || 1;
-    let lastToggleTime = 0; let mouseX = 0; let isCustomNight = false;
+    let lastToggleTime = 0; let mouseX = window.innerWidth / 2; let isCustomNight = false;
     let goldenVrajActive = false; let goldenTimer = null;
     let foxyRunPending = false;
     
@@ -810,6 +823,7 @@
             if (!isEndlessMode) winGame(); 
         }
         if(e.code === 'KeyL' && gameState.active) {
+            // Random Jumpscare for testing
             let availableBots = animatronics.filter(a => a.name !== 'Golden Vraj');
             let randomBot = availableBots[Math.floor(Math.random() * availableBots.length)];
             triggerJumpscare(randomBot);
@@ -1405,13 +1419,11 @@
     function triggerJumpscare(bot) {
         if(!gameState.active && bot.name!=='Freddy' && bot.name!=='Golden Vraj') return;
         
-        if (window.submitGlobalEvent) {
-            window.submitGlobalEvent({ type: 'death', killer: bot.name });
-        }
-
         if (isEndlessMode && window.submitEndlessScore) {
             window.submitEndlessScore(endlessSeconds);
         }
+
+        if(gameState.active && window.logActivity) window.logActivity('death', bot.name);
 
         gameState.active = false;
         sounds.fan.pause(); playSound('jump');
@@ -1442,13 +1454,14 @@
     }
 
     function winGame() {
+        if(gameState.active) {
+            let winDetail = isCustomNight ? 'Custom Night' : (isEndlessMode ? 'Endless Mode' : 'Night '+currentNight);
+            if(window.logActivity) window.logActivity('win', winDetail);
+        }
+
         gameState.active = false;
         sounds.fan.pause(); playSound('win');
         
-        if (window.submitGlobalEvent) {
-            window.submitGlobalEvent({ type: 'win', night: currentNight });
-        }
-
         if(currentNight === 5) localStorage.setItem('vraj_star1', true);
         if(currentNight === 6) localStorage.setItem('vraj_star2', true);
         
@@ -1530,7 +1543,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
-    import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, setDoc, doc, query, where, getDocs, orderBy, limit, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBn2LuoY0ZqHnz2nVx3ZidRVPv3GgAYRGU",
@@ -1546,40 +1559,63 @@
     const analytics = getAnalytics(app);
     const db = getFirestore(app);
 
-    // Player Identification
-    let userId = localStorage.getItem('vraj_userId');
-    if(!userId) {
-        userId = 'uid_' + Math.random().toString(36).substr(2, 9) + Date.now();
-        localStorage.setItem('vraj_userId', userId);
+    // UNIQUE PLAYER IDENTIFIER
+    let userUID = localStorage.getItem('vraj_uid');
+    if (!userUID) {
+        userUID = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('vraj_uid', userUID);
     }
 
     let playerName = localStorage.getItem('vraj_playerName') || "Guest" + Math.floor(Math.random() * 1000);
     document.getElementById('player-name-input').value = playerName;
 
-    // NAME UNIQUENESS LOGIC
+    // ONLINE PRESENCE PING
+    setInterval(() => {
+        setDoc(doc(db, "fniv_users", userUID), {
+            name: playerName,
+            nameLower: playerName.toLowerCase(),
+            lastActive: Date.now()
+        }, { merge: true });
+    }, 10000);
+
+    // GET ONLINE PLAYERS
+    onSnapshot(collection(db, "fniv_users"), (snapshot) => {
+        let now = Date.now();
+        let count = 0;
+        snapshot.forEach((doc) => {
+            let data = doc.data();
+            if (now - data.lastActive < 25000) count++; 
+        });
+        document.getElementById('online-count').innerText = count;
+    });
+
+    // SAVE UNIQUE NAME LOGIC
     document.getElementById('save-name-btn').addEventListener('click', async () => {
         let newName = document.getElementById('player-name-input').value.trim();
-        if (newName) {
-            let lowerName = newName.toLowerCase();
-            const qCheck = query(collection(db, "fniv_users"), where("lower", "==", lowerName));
+        if (newName && newName.toLowerCase() !== playerName.toLowerCase()) {
             
-            try {
-                const snap = await getDocs(qCheck);
-                let isTaken = false;
-                snap.forEach(d => { if(d.id !== userId) isTaken = true; });
-
-                if(isTaken) {
-                    alert("Name already taken! Please choose another.");
-                } else {
-                    await setDoc(doc(db, "fniv_users", userId), { name: newName, lower: lowerName });
-                    playerName = newName;
-                    localStorage.setItem('vraj_playerName', playerName);
-                    alert("Name saved: " + playerName);
-                }
-            } catch(e) {
-                console.error("Error saving name (Ensure Firestore rules allow read/write):", e);
-                alert("Could not connect to database.");
+            const qName = query(collection(db, "fniv_users"), where("nameLower", "==", newName.toLowerCase()));
+            const querySnapshot = await getDocs(qName);
+            let taken = false;
+            querySnapshot.forEach((d) => {
+                if (d.id !== userUID) taken = true;
+            });
+            
+            if (taken) {
+                alert("That name is already taken! Try another.");
+                document.getElementById('player-name-input').value = playerName;
+            } else {
+                playerName = newName;
+                localStorage.setItem('vraj_playerName', playerName);
+                await setDoc(doc(db, "fniv_users", userUID), {
+                    name: playerName,
+                    nameLower: playerName.toLowerCase(),
+                    lastActive: Date.now()
+                });
+                alert("Name saved: " + playerName);
             }
+        } else if (newName.toLowerCase() === playerName.toLowerCase()) {
+            alert("Name saved: " + playerName);
         }
     });
 
@@ -1589,7 +1625,7 @@
         }[tag])) : '';
     }
 
-    // CHAT SYSTEM
+    // Chat System Global Function
     window.submitChatMessage = async (text) => {
         if (!text) return;
         try {
@@ -1603,6 +1639,7 @@
         }
     };
 
+    // Chat Listeners
     const chatBoxMenu = document.getElementById('chat-box');
     const chatBoxInGame = document.getElementById('in-game-chat-box');
     const qChat = query(collection(db, "fniv_chat"), orderBy("timestamp", "desc"), limit(30));
@@ -1623,6 +1660,7 @@
         chatBoxInGame.scrollTop = chatBoxInGame.scrollHeight;
     });
 
+    // Enter Key Logic - Menu Chat
     document.getElementById('chat-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') document.getElementById('send-chat-btn').click();
     });
@@ -1632,6 +1670,7 @@
         msgInput.value = '';
     });
 
+    // Enter Key Logic - In-Game Chat
     document.getElementById('in-game-chat-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             window.submitChatMessage(e.target.value.trim());
@@ -1639,7 +1678,7 @@
         }
     });
 
-    // LEADERBOARD SYSTEM
+    // Leaderboard System
     const lbBox = document.getElementById('leaderboard-box');
     const qLb = query(collection(db, "fniv_leaderboard"), orderBy("score", "desc"), limit(10));
 
@@ -1670,43 +1709,71 @@
                 timeString: timeStr,
                 timestamp: serverTimestamp()
             });
-        } catch (e) { console.error("Error saving score", e); }
+        } catch (e) {}
     };
 
-    // GLOBAL NOTIFICATIONS (DEATHS/WINS)
-    window.submitGlobalEvent = async (eventData) => {
+    // Global Activity Logging (Wins / Deaths)
+    window.logActivity = async (type, detail) => {
         try {
-            eventData.player = playerName;
-            eventData.timestamp = serverTimestamp();
-            await addDoc(collection(db, "fniv_events"), eventData);
-        } catch(e) { console.error("Event Error: ", e); }
+            await addDoc(collection(db, "fniv_activity"), {
+                name: playerName,
+                type: type,
+                detail: detail,
+                timestamp: serverTimestamp(),
+                clientTime: Date.now()
+            });
+        } catch (e) {}
     };
 
-    const qEvents = query(collection(db, "fniv_events"), orderBy("timestamp", "desc"), limit(1));
-    let firstEventLoad = true;
-    onSnapshot(qEvents, (snapshot) => {
-        if(firstEventLoad) { firstEventLoad = false; return; }
-        snapshot.docChanges().forEach((change) => {
-            if (change.type === "added") {
-                let data = change.doc.data();
-                if(!data.player) return; 
-                
-                let msg = "";
-                if(data.type === 'death') msg = `💀 ${escapeHTML(data.player)} was killed by ${escapeHTML(data.killer)}`;
-                else if(data.type === 'win') msg = `🏆 ${escapeHTML(data.player)} survived Night ${data.night}!`;
-                else return;
-
-                let notif = document.createElement('div');
-                notif.className = 'global-notif';
-                notif.innerHTML = msg;
-                document.body.appendChild(notif);
-                
-                setTimeout(() => { 
-                    if(notif.parentNode) notif.parentNode.removeChild(notif); 
-                }, 4000);
+    let initialActivityLoad = true;
+    const historyBox = document.getElementById('history-box');
+    const qActivity = query(collection(db, "fniv_activity"), orderBy("timestamp", "desc"), limit(30));
+    
+    onSnapshot(qActivity, (snapshot) => {
+        historyBox.innerHTML = '';
+        let activities = [];
+        snapshot.forEach((doc) => activities.push(doc.data()));
+        activities.reverse();
+        
+        activities.forEach(act => {
+            let htmlStr = `<div style="margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:5px;">`;
+            if(act.type === 'death') {
+                htmlStr += `<strong style="color:gold;">${escapeHTML(act.name)}</strong> was killed by <span style="color:#f55; font-weight:bold;">${escapeHTML(act.detail)}</span>`;
+            } else if(act.type === 'win') {
+                htmlStr += `<strong style="color:gold;">${escapeHTML(act.name)}</strong> survived <span style="color:#5f5; font-weight:bold;">${escapeHTML(act.detail)}</span>`;
             }
+            htmlStr += `</div>`;
+            historyBox.innerHTML += htmlStr;
         });
+        historyBox.scrollTop = historyBox.scrollHeight;
+        
+        // Pop Global Notification if it's a new event
+        if(!initialActivityLoad && snapshot.docChanges().length > 0) {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    let act = change.doc.data();
+                    if(Date.now() - act.clientTime < 10000) { 
+                        showGlobalNotification(act);
+                    }
+                }
+            });
+        }
+        initialActivityLoad = false;
     });
+
+    function showGlobalNotification(act) {
+        let notif = document.getElementById('global-notification');
+        let text = document.getElementById('global-notif-text');
+        
+        if(act.type === 'death') {
+            text.innerHTML = `<span style="color:gold;">${escapeHTML(act.name)}</span> was killed by <span style="color:#f55;">${escapeHTML(act.detail)}</span>!`;
+        } else if (act.type === 'win') {
+            text.innerHTML = `<span style="color:gold;">${escapeHTML(act.name)}</span> survived <span style="color:#5f5;">${escapeHTML(act.detail)}</span>!`;
+        }
+        
+        notif.classList.add('notif-show');
+        setTimeout(() => { notif.classList.remove('notif-show'); }, 4000);
+    }
 </script>
 </body>
 </html>
