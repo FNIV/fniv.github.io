@@ -15,7 +15,6 @@
         background-color: #000; color: #fff;
         overflow: hidden; user-select: none;
         height: 100vh; width: 100vw;
-        /* Lock mobile page scrolling to prevent pull-to-refresh */
         touch-action: none; 
     }
     img { pointer-events: none; user-drag: none; -webkit-user-drag: none; }
@@ -167,7 +166,7 @@
     .social-btn:hover { background: #fff; color: #000; }
     
     #chat-box, #history-box, #leaderboard-box {
-        touch-action: pan-y; /* Allows vertical scrolling on mobile */
+        touch-action: pan-y;
         background: rgba(0,0,0,0.8); border: 1px solid #444; border-radius: 4px;
         overflow-y: auto; margin-bottom: 5px; padding: 10px;
         font-size: 0.9rem; word-wrap: break-word; box-shadow: inset 0 0 10px #000;
@@ -271,6 +270,15 @@
         100% { transform: scale(2.5) translate(-40px, 30px) rotate(-4deg); filter: contrast(1.4) brightness(1.2); }
     }
 
+    /* POWER OUTAGE FREDDY BLINK */
+    @keyframes freddyBlink {
+        0%, 15%, 45%, 65%, 100% { opacity: 0; }
+        10%, 20%, 50%, 70% { opacity: 1; }
+    }
+    .freddy-power-blink {
+        animation: freddyBlink 1.5s infinite;
+    }
+
     #help-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: #000 url('textures/help.png') no-repeat center center;
@@ -298,7 +306,7 @@
     .usage-bar { width: 15px; height: 20px; background: #222; border: 1px solid #555; }
     .usage-active { background: #0f0; box-shadow: 0 0 5px #0f0; }
 
-    /* IN-GAME ELEMENTS (Anchored inside the panning office room) */
+    /* IN-GAME ELEMENTS */
     #mute-call-btn {
         position: absolute; bottom: 100px; left: 49%; transform: translateX(-50%);
         background: rgba(0, 0, 0, 0.6); border: 2px solid #555; border-radius: 5px;
@@ -690,7 +698,6 @@
 </div>
 
 <script>
-    // --- CACHED DOM ELEMENTS ---
     const domOffice = document.getElementById('office');
     const domPowerDisplay = document.getElementById('power-display');
     const domTimeDisplay = document.getElementById('time-display');
@@ -761,6 +768,7 @@
         run: new Audio('sounds/run.mp3'),
         bang: new Audio('sounds/bang.mp3'),
         power: new Audio('sounds/power_out.mp3'),
+        powersong: new Audio('sounds/powersong.mp3'),
         jump: new Audio('sounds/jumpscare.mp3'),
         win: new Audio('sounds/6am.mp3'),
         menuMusic: new Audio('sounds/menu_music.mp3'),
@@ -777,6 +785,7 @@
     if(sounds.surprise) sounds.surprise.preload = 'auto';
     if(sounds.hangup) sounds.hangup.preload = 'auto';
     if(sounds.click) sounds.click.preload = 'auto';
+    if(sounds.powersong) sounds.powersong.preload = 'auto';
     if(sounds.kitchen) { sounds.kitchen.loop = true; sounds.kitchen.volume = 0.6; sounds.kitchen.preload = 'auto'; }
 
     let assetsLoaded = 0;
@@ -858,14 +867,11 @@
     let callTimeout = null;
     let muteBtnTimeout = null;
 
-    // Surprise sound logic trackers
     let seenAtDoor = { left: false, right: false };
 
-    // TRUE FNAF 1 BASE AI LEVELS
     const NIGHT_DIFFICULTY = { 1: [0,0,0,0,0], 2: [3,1,0,1,0], 3: [0,5,1,2,0], 4: [2,4,2,6,0], 5: [5,7,3,5,0], 6: [10,12,4,16,0] };
-    let gameState = { active: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
+    let gameState = { active: false, powerOut: false, nightWon: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
     
-    // PERFECTED FNAF 1 PATHING
     const ADJACENCY = {
         'Bonnie': { '1A':['1B', '5'], '1B':['2A', '5'], '5':['1B', '2A'], '2A':['3', '2B'], '3':['2A', '2B'], '2B':['door_left', '3'] },
         'Chica': { '1A':['1B', '7'], '1B':['7', '6', '4A'], '7':['1B', '6'], '6':['4A', '1B'], '4A':['4B', '6', '1B'], '4B':['door_right', '4A'] },
@@ -889,7 +895,6 @@
         if(localStorage.getItem('vraj_star3')) document.getElementById('star3').style.display = 'inline';
     }
 
-    // Custom Night Arrow Logic
     let aiAdjustInterval = null;
     window.startAdjustAI = function(id, delta) {
         playSound('click');
@@ -913,20 +918,19 @@
         el.value = val;
     }
 
-    // Global Click Listener for Menu Sounds (Restricted to menus only)
     document.addEventListener('click', (e) => {
-        if (gameState.active) return; // Prevent menu clicks during gameplay
+        if (gameState.active || gameState.powerOut) return; 
         if (e.target.classList.contains('menu-btn') || 
             e.target.classList.contains('cn-btn') || 
             e.target.classList.contains('social-btn') || 
             e.target.classList.contains('tab-btn') || 
             e.target.id === 'reset-progress-btn' || 
-            e.target.classList.contains('menu-night-display')) {
+            e.target.classList.contains('menu-night-display') || 
+            e.target.classList.contains('cam-btn')) {
             playSound('click');
         }
     });
 
-    // DEBUG CHEATS & HOTKEYS
     document.addEventListener('keydown', (e) => {
         if(e.target.tagName === 'INPUT') return;
 
@@ -934,13 +938,18 @@
             localStorage.setItem('vraj_night', 7);
             location.reload();
         }
-        if(e.ctrlKey && e.shiftKey && e.code === 'KeyP' && gameState.active) {
+        if(e.ctrlKey && e.shiftKey && e.code === 'KeyP' && gameState.active && !gameState.powerOut) {
             if (!isEndlessMode) winGame(); 
         }
-        if(e.code === 'KeyL' && gameState.active) {
+        if(e.code === 'KeyL' && gameState.active && !gameState.powerOut) {
             let availableBots = animatronics.filter(a => a.name !== 'Golden Vraj');
             let randomBot = availableBots[Math.floor(Math.random() * availableBots.length)];
             triggerJumpscare(randomBot);
+        }
+        if(e.code === 'KeyK' && gameState.active && !gameState.powerOut && gameState.power > 1) {
+            exactPower = 1.0;
+            gameState.power = 1;
+            domPowerDisplay.innerText = `Power: 1%`;
         }
     });
 
@@ -950,7 +959,6 @@
         }
     }, {once:true});
 
-    // MENU TWITCH ANIMATION
     timerMenuAnim = setInterval(() => {
         const img = document.getElementById('menu-animatronic');
         if(Math.random() > 0.7) {
@@ -970,7 +978,7 @@
     }
 
     function triggerCamStatic(duration = 100) {
-        if(gameState.cameraOpen) {
+        if(gameState.cameraOpen && !gameState.powerOut) {
             domCamMoveStatic.style.display = 'block';
             setTimeout(() => { domCamMoveStatic.style.display = 'none'; }, duration); 
         }
@@ -1030,7 +1038,7 @@
 
     function checkKitchenAudio() {
         let chica = animatronics.find(a => a.name === 'Chica');
-        let shouldPlay = (gameState.cameraOpen && gameState.currentCam === '6' && chica && chica.location === '6');
+        let shouldPlay = (gameState.cameraOpen && !gameState.powerOut && gameState.currentCam === '6' && chica && chica.location === '6');
         
         if (shouldPlay) {
             if (sounds.kitchen.paused) sounds.kitchen.play().catch(()=>{});
@@ -1069,6 +1077,8 @@
 
     function startGameLoop() {
         gameState.active = true;
+        gameState.powerOut = false;
+        gameState.nightWon = false;
         exactPower = 100.0;
         sounds.fan.play().catch(()=>{});
         
@@ -1102,12 +1112,12 @@
 
             if (callToPlay !== null) {
                 callTimeout = setTimeout(() => {
-                    if (gameState.active && gameState.power > 0) {
+                    if (gameState.active && !gameState.powerOut && gameState.power > 0) {
                         currentCallAudio = new Audio(`sounds/call${callToPlay}.mp3`);
                         currentCallAudio.play().catch(e => console.log("No call audio for this night."));
                         
                         muteBtnTimeout = setTimeout(() => {
-                            if (gameState.active && currentCallAudio && !currentCallAudio.paused) {
+                            if (gameState.active && !gameState.powerOut && currentCallAudio && !currentCallAudio.paused) {
                                 domMuteCallBtn.style.display = 'block';
                             }
                         }, 2000);
@@ -1122,6 +1132,7 @@
     }
 
     function muteCall() {
+        if(gameState.powerOut) return;
         if (currentCallAudio) {
             currentCallAudio.pause();
             currentCallAudio.currentTime = 0;
@@ -1131,7 +1142,7 @@
     }
 
     function updateEndlessTime() {
-        if(!gameState.active) return;
+        if(!gameState.active || gameState.powerOut) return;
         endlessSeconds++;
         updateEndlessDisplay();
         
@@ -1151,7 +1162,7 @@
     }
 
     function resetGame() {
-        gameState = { active: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
+        gameState = { active: false, powerOut: false, nightWon: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
         animatronics.forEach(a => { if(a.name!=='Golden Vraj') a.location = '1A'; });
         let foxy = animatronics.find(a=>a.name==='Foxy'); foxy.location = '1C'; foxy.stage = 0; foxy.patience = 2;
         foxyRunPending = false;
@@ -1164,9 +1175,12 @@
         domMuteCallBtn.style.display = 'none';
         domInGameChatContainer.style.display = 'none';
         sounds.kitchen.pause(); sounds.kitchen.currentTime = 0;
+        sounds.powersong.pause(); sounds.powersong.currentTime = 0;
 
         goldenVrajActive = false; clearTimeout(goldenTimer); domGoldenVraj.style.display = 'none';
-        seenAtDoor = { left: false, right: false }; // Reset sightings
+        seenAtDoor = { left: false, right: false }; 
+        
+        domOffice.style.filter = 'none';
 
         if (isEndlessMode) {
             document.getElementById('night-display').innerText = "Endless Mode";
@@ -1185,12 +1199,14 @@
             domLights[side].door.style.backgroundColor = '#050505';
             domLights[side].win.innerHTML = ''; domLights[side].hall.innerHTML = '';
         });
+        
+        domCameraSystem.style.display = 'none';
         domMonitorOpener.style.display = 'flex';
-        closeCameraImmediate();
+        domMonitorPanel.style.transform = "translateY(100%)";
     }
 
     function updateTime() {
-        if(!gameState.active) return;
+        if(!gameState.active || gameState.powerOut) return;
         gameState.hour++;
         let disp = gameState.hour === 0 ? 12 : gameState.hour;
         domTimeDisplay.innerText = `${disp} AM`;
@@ -1222,18 +1238,29 @@
         gameState.usage = usage; 
         let displayUsage = Math.min(usage, 4);
         updateUsageUI(displayUsage);
+        
+        let passiveDrainSec = 0;
+        if (isCustomNight) passiveDrainSec = 3;
+        else if (currentNight === 2) passiveDrainSec = 6;
+        else if (currentNight === 3) passiveDrainSec = 5;
+        else if (currentNight === 4) passiveDrainSec = 4;
+        else if (currentNight >= 5) passiveDrainSec = 3;
 
-        if (!powerTimer && gameState.active) {
+        if (!powerTimer && gameState.active && !gameState.powerOut) {
             powerTimer = setInterval(() => {
-                if(!gameState.active) return;
+                if(!gameState.active || gameState.powerOut) return;
                 
                 exactPower -= (gameState.usage / 96);
+                
+                if (passiveDrainSec > 0) {
+                    exactPower -= (0.1 / (passiveDrainSec * 10));
+                }
+                
                 gameState.power = Math.ceil(exactPower);
                 
                 if(gameState.power <= 0) { 
                     gameState.power = 0; exactPower = 0;
                     domPowerDisplay.innerText = `Power: 0%`;
-                    clearInterval(powerTimer); powerTimer = null;
                     triggerPowerOutage(); 
                 } else {
                     domPowerDisplay.innerText = `Power: ${gameState.power}%`;
@@ -1242,9 +1269,8 @@
         }
     }
 
-    // TRUE FNAF 1 1-20 AI CHECK LOGIC
     function updateAI() {
-        if(!gameState.active) return;
+        if(!gameState.active || gameState.powerOut) return;
         updateFoxy();
         
         animatronics.forEach(bot => { 
@@ -1276,7 +1302,7 @@
                 if (foxy.patience <= 0) {
                     if(gameState.cameraOpen && gameState.currentCam === '1C') triggerCamStatic(400);
                     foxy.stage++;
-                    foxy.patience = 2; // Needs ~2 successful ticks to advance again
+                    foxy.patience = 2; 
                     if(foxy.stage === 3) foxy.location = '2A';
                 }
             }
@@ -1294,21 +1320,20 @@
         domGoldenVraj.style.display = 'block';
         sounds.laugh.play(); 
         goldenTimer = setTimeout(() => {
-            if (goldenVrajActive && gameState.active) {
+            if (goldenVrajActive && gameState.active && !gameState.powerOut) {
                 triggerJumpscare({ name: 'Golden Vraj' });
             }
         }, 1500);
     }
 
     function moveBot(bot) {
-        // FREDDY CAMERA LOCK RULE (Stops him moving if you are looking at his current room)
-        if (bot.name === 'Freddy' && gameState.cameraOpen && gameState.currentCam === bot.location) return; 
+        if (bot.name === 'Freddy' && gameState.currentCam === bot.location) return; 
+        if (bot.name === 'Freddy' && bot.location !== '4B' && !gameState.cameraOpen) return;
         
         if(bot.name === 'Freddy') playSound('laugh');
         
         let oldLoc = bot.location;
         
-        // Attack/Door Logic
         if(bot.location === 'door_left') { 
             if(!gameState.doors.left) { triggerJumpscare(bot); return; }
             else { 
@@ -1322,20 +1347,18 @@
                 seenAtDoor.right = false; 
             }
         } else {
-            // Normal Movement
             let possibleMoves = ADJACENCY[bot.name][bot.location];
             if(possibleMoves) {
                 let nextLoc = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
                 
-                // FREDDY 4B DOOR LOGIC
                 if(bot.name === 'Freddy') {
                    if(bot.location === '4A') nextLoc = '4B'; 
                    if(bot.location === '4B') {
                        if(gameState.doors.right) {
-                           bot.location = '4A'; // Thwarted, goes back
+                           bot.location = '4A'; 
                            return;
                        } else {
-                           triggerJumpscare(bot); // Attacks directly from 4B
+                           triggerJumpscare(bot); 
                            return;
                        }
                    }
@@ -1358,7 +1381,7 @@
         foxy.location = 'door_left'; 
         
         setTimeout(() => {
-             if(gameState.active) {
+             if(gameState.active && !gameState.powerOut) {
                  if(gameState.doors.left) { 
                      gameState.foxyBangs++;
                      let penalty = 1 + ((gameState.foxyBangs - 1) * 5); // 1%, 6%, 11%, 16%...
@@ -1385,7 +1408,7 @@
     }
 
     function toggleDoor(side) {
-        if(!gameState.active || gameState.power <= 0) return;
+        if(!gameState.active || gameState.power <= 0 || gameState.powerOut) return;
         playSound('door');
         gameState.doors[side] = !gameState.doors[side];
         if(gameState.doors[side]) { 
@@ -1399,7 +1422,7 @@
     }
 
     function toggleLight(side, on) {
-        if(!gameState.active || gameState.power <= 0) return;
+        if(!gameState.active || gameState.power <= 0 || gameState.powerOut) return;
         gameState.lights[side] = on;
         startPowerDrain(); 
         if(on) { sounds.light.currentTime = 0; sounds.light.play(); } 
@@ -1432,7 +1455,7 @@
     }
 
     function toggleMonitor() {
-        if (!gameState.active || gameState.power <= 0) return;
+        if (!gameState.active || gameState.power <= 0 || gameState.powerOut) return;
         let now = Date.now();
         if (now - lastToggleTime < 250) return; 
         lastToggleTime = now;
@@ -1473,14 +1496,15 @@
     function closeCameraImmediate() {
         gameState.cameraOpen = false; sounds.fan.volume = 0.05;
         domCameraSystem.style.display = 'none';
-        domMonitorOpener.style.display = 'flex';
+        if(!gameState.powerOut) domMonitorOpener.style.display = 'flex';
+        domMonitorPanel.style.transition = 'none';
         domMonitorPanel.style.transform = "translateY(100%)";
         checkKitchenAudio();
         startPowerDrain();
     }
 
     function switchCam(cam) {
-        if(gameState.currentCam === cam) return;
+        if(gameState.currentCam === cam || gameState.powerOut) return;
         playSound('blip');
         gameState.currentCam = cam;
         document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('cam-selected'));
@@ -1499,7 +1523,7 @@
     }
 
     function renderCamera() {
-        if(!gameState.cameraOpen) return;
+        if(!gameState.cameraOpen || gameState.powerOut) return;
         domCamLabel.innerText = `CAM ${gameState.currentCam}`;
         
         let bg = `textures/cam${gameState.currentCam.toLowerCase()}.png`;
@@ -1544,7 +1568,7 @@
     document.addEventListener('touchmove', (e) => mouseX = e.touches[0].clientX, {passive: true});
 
     function scrollLoop() {
-        if(gameState.active && !gameState.cameraOpen) {
+        if(gameState.active && !gameState.cameraOpen) { 
             const w = window.innerWidth;
             const t = w * 0.35;
             if(mouseX < t) currentScroll -= ((t-mouseX)/t)*1.5;
@@ -1559,25 +1583,80 @@
         requestAnimationFrame(scrollLoop);
     }
 
+    // POWER OUTAGE SEQUENCE
     function triggerPowerOutage() {
-        if(!gameState.active && gameState.power > 0) return;
-        gameState.active = false;
+        if(!gameState.active || gameState.powerOut) return;
+        gameState.powerOut = true; 
+        
         clearInterval(powerTimer); powerTimer = null;
-        playSound('power'); sounds.fan.pause(); sounds.kitchen.pause();
+        clearInterval(timerAI); timerAI = null; 
+        
+        playSound('power'); 
+        sounds.fan.pause(); 
+        sounds.kitchen.pause();
+        sounds.light.pause(); sounds.light.currentTime = 0;
         
         if (currentCallAudio) { currentCallAudio.pause(); currentCallAudio = null; }
         domMuteCallBtn.style.display = 'none';
         domInGameChatContainer.style.display = 'none';
-        
-        closeCameraImmediate(); domOffice.style.background = '#000';
-        domOffice.style.backgroundImage = 'none';
         domMonitorOpener.style.display = 'none';
+        
+        // Force Camera Close Instantly
+        gameState.cameraOpen = false;
+        domCameraSystem.style.display = 'none';
+        domMonitorPanel.style.transition = 'none';
+        domMonitorPanel.style.transform = "translateY(100%)";
+        
+        // Open all doors, turn off all lights
         ['left','right'].forEach(s => {
+            gameState.doors[s] = false;
+            gameState.lights[s] = false;
             domDoors[s].shutter.classList.remove('closed');
+            domDoors[s].btn.classList.remove('btn-active-door');
+            domLights[s].btn.classList.remove('btn-active-light');
             domLights[s].win.style.backgroundColor = 'transparent';
             domLights[s].door.style.backgroundColor = '#050505';
+            domLights[s].win.innerHTML = ''; 
+            domLights[s].hall.innerHTML = '';
         });
-        setTimeout(() => triggerJumpscare({name:'Freddy'}), 5000);
+
+        // Darken office but keep it visible
+        domOffice.style.filter = 'brightness(0.3)';
+
+        // FNAF 1 Sequence Timing
+        setTimeout(() => {
+            if(gameState.nightWon) return; 
+            
+            playSound('powersong');
+            domLights['left'].hall.innerHTML = `<img src="textures/vrajs/Freddy_office.png" class="animatronic-full freddy-power-blink" style="filter: brightness(2) drop-shadow(0 0 15px #fff);">`;
+            
+            let songDuration = 10000;
+            if (Math.random() > 0.5) { 
+                songDuration = 15000;
+                if (Math.random() > 0.5) { 
+                    songDuration = 20000;
+                }
+            }
+
+            setTimeout(() => {
+                if(gameState.nightWon) return;
+                sounds.powersong.pause();
+                sounds.powersong.currentTime = 0;
+                
+                // Screen goes pitch black
+                domOffice.style.filter = 'brightness(0)';
+                domLights['left'].hall.innerHTML = ''; 
+                
+                // Random delay 3 to 8 seconds
+                let delay = Math.floor(Math.random() * 5000) + 3000;
+                setTimeout(() => {
+                    if(gameState.nightWon) return;
+                    triggerJumpscare({name:'Freddy'});
+                }, delay);
+                
+            }, songDuration);
+            
+        }, 2000);
     }
 
     const realNames = { 'Bonnie': 'Vronnie', 'Chica': 'Vricha', 'Freddy': 'Vraj', 'Foxy': 'Vrojy', 'Golden Vraj': 'Golden Vraj' };
@@ -1603,7 +1682,7 @@
 
         domMonitorOpener.style.display='none';
         
-        domGameOverScreen.style.display = 'flex';
+        const s = document.getElementById('game-over-screen'); s.style.display = 'flex';
         let tex = `textures/vrajs/${bot.name}_Jumpscare.png`;
         if (bot.name === 'Golden Vraj') tex = `textures/vrajs/golden_jumpscare.png`;
         
@@ -1612,7 +1691,8 @@
         setTimeout(() => {
             sounds.jump.pause();
             sounds.jump.currentTime = 0;
-            domTransitionStaticDeath.style.display = 'block';
+            const dStatic = document.getElementById('transition-static-death');
+            dStatic.style.display = 'block';
             sounds.static.play(); 
             setTimeout(() => location.reload(), 2000);
         }, 1200);
@@ -1634,7 +1714,10 @@
         }
 
         gameState.active = false;
+        gameState.nightWon = true; 
         sounds.fan.pause(); sounds.kitchen.pause(); playSound('win');
+        sounds.powersong.pause(); sounds.powersong.currentTime = 0;
+        domOffice.style.filter = 'none';
         
         if(currentNight === 5) localStorage.setItem('vraj_star1', true);
         if(currentNight === 6) localStorage.setItem('vraj_star2', true);
@@ -1817,9 +1900,7 @@
                     const actQ = query(collection(db, "fniv_activity"), where("uid", "==", userUID));
                     const actSnaps = await getDocs(actQ);
                     actSnaps.forEach(d => updateDoc(d.ref, { name: playerName }));
-                } catch (e) {
-                    console.error("Failed to retroactively update records", e);
-                }
+                } catch (e) {}
 
                 alert("Name saved: " + playerName);
             }
