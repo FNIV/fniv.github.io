@@ -734,7 +734,7 @@
         right: { win: document.getElementById('window-right'), door: document.getElementById('doorway-right'), hall: document.getElementById('hall-right'), btn: document.getElementById('btn-light-right') }
     };
 
-    const GAME_HOUR_DURATION = 80000; 
+    const GAME_HOUR_DURATION = 86000; 
     const AI_MOVE_INTERVAL = 4970; 
     const JUMPSCARE_DURATION = 5000; 
     
@@ -1239,22 +1239,18 @@
         let displayUsage = Math.min(usage, 4);
         updateUsageUI(displayUsage);
         
-        let passiveDrainSec = 0;
-        if (isCustomNight) passiveDrainSec = 3;
-        else if (currentNight === 2) passiveDrainSec = 6;
-        else if (currentNight === 3) passiveDrainSec = 5;
-        else if (currentNight === 4) passiveDrainSec = 4;
-        else if (currentNight >= 5) passiveDrainSec = 3;
+        let nightMultiplier = 1.0;
+        if (isCustomNight) nightMultiplier = 1.15;
+        else if (currentNight === 2) nightMultiplier = 1.06;
+        else if (currentNight === 3) nightMultiplier = 1.12;
+        else if (currentNight === 4) nightMultiplier = 1.18;
+        else if (currentNight >= 5) nightMultiplier = 1.25;
 
         if (!powerTimer && gameState.active && !gameState.powerOut) {
             powerTimer = setInterval(() => {
                 if(!gameState.active || gameState.powerOut) return;
                 
-                exactPower -= (gameState.usage / 96);
-                
-                if (passiveDrainSec > 0) {
-                    exactPower -= (0.1 / (passiveDrainSec * 10));
-                }
+                exactPower -= (gameState.usage / 96) * nightMultiplier;
                 
                 gameState.power = Math.ceil(exactPower);
                 
