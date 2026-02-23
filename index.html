@@ -248,6 +248,12 @@
         justify-content: center; align-items: center; overflow: hidden;
     }
     
+    #chatscare-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: #000; z-index: 100000; display: none;
+        justify-content: center; align-items: center;
+    }
+
     #jumpscare-anim {
         width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;
         animation: lungeIn 0.05s ease-out forwards, crazyShake 0.05s 0.05s infinite;
@@ -613,9 +619,14 @@
 </div>
 
 <div id="win-screen" class="hidden"><div class="clock-box" id="win-clock">5 AM</div><div style="font-size: 2rem; color: #888; font-weight: bold;">NIGHT COMPLETE</div></div>
+
 <div id="game-over-screen">
     <div id="transition-static-death" class="static-anim static-opaque" style="z-index: 9999; display:none;"></div>
     <div id="jumpscare-anim" style="z-index: 2;"></div>
+</div>
+
+<div id="chatscare-overlay">
+    <img id="chatscare-img" style="max-width:100%; max-height:100%; object-fit:contain;">
 </div>
 
 <div id="monitor-panel"><div id="monitor-panel-inner"></div></div>
@@ -775,7 +786,8 @@
         surprise: new Audio('sounds/suprise.mp3'), 
         hangup: new Audio('sounds/hangup.mp3'),
         click: new Audio('sounds/click.mp3'),
-        kitchen: new Audio('sounds/kitchen.mp3')
+        kitchen: new Audio('sounds/kitchen.mp3'),
+        chatscare: new Audio('sounds/chatscare.mp3')
     };
     
     sounds.fan.loop = true; sounds.fan.volume = 0.05; sounds.fan.preload = 'auto';
@@ -787,6 +799,9 @@
     if(sounds.click) sounds.click.preload = 'auto';
     if(sounds.powersong) sounds.powersong.preload = 'auto';
     if(sounds.kitchen) { sounds.kitchen.loop = true; sounds.kitchen.volume = 0.6; sounds.kitchen.preload = 'auto'; }
+    if(sounds.chatscare) sounds.chatscare.preload = 'auto';
+
+    window.sounds = sounds;
 
     let assetsLoaded = 0;
     const totalAssets = imageList.length;
@@ -879,15 +894,16 @@
     };
 
     let animatronics = [
-        { name: 'Bonnie', location: '1A', level: 0 },
-        { name: 'Chica',  location: '1A', level: 0 },
-        { name: 'Freddy', location: '1A', level: 0 },
-        { name: 'Foxy',   location: '1C', level: 0, stage: 0, patience: 2 },
-        { name: 'Golden Vraj', location: null, level: 0 } 
+        { name: 'Bonnie', location: '1A', level: 0, doorTime: 0 },
+        { name: 'Chica',  location: '1A', level: 0, doorTime: 0 },
+        { name: 'Freddy', location: '1A', level: 0, doorTime: 0 },
+        { name: 'Foxy',   location: '1C', level: 0, stage: 0, patience: 2, doorTime: 0 },
+        { name: 'Golden Vraj', location: null, level: 0, doorTime: 0 } 
     ];
     let timerHour, timerAI, timerMenuAnim;
 
     function playSound(name) { if(sounds[name]) { sounds[name].currentTime = 0; sounds[name].play().catch(()=>{}); } }
+    window.playSound = playSound;
 
     function checkStars() {
         if(localStorage.getItem('vraj_star1')) document.getElementById('star1').style.display = 'inline';
@@ -938,18 +954,10 @@
             localStorage.setItem('vraj_night', 7);
             location.reload();
         }
-        if(e.ctrlKey && e.shiftKey && e.code === 'KeyP' && gameState.active && !gameState.powerOut) {
-            if (!isEndlessMode) winGame(); 
-        }
-        if(e.code === 'KeyL' && gameState.active && !gameState.powerOut) {
+        if(e.shiftKey && e.code === 'KeyL' && gameState.active && !gameState.powerOut) {
             let availableBots = animatronics.filter(a => a.name !== 'Golden Vraj');
             let randomBot = availableBots[Math.floor(Math.random() * availableBots.length)];
             triggerJumpscare(randomBot);
-        }
-        if(e.code === 'KeyK' && gameState.active && !gameState.powerOut && gameState.power > 1) {
-            exactPower = 1.0;
-            gameState.power = 1;
-            domPowerDisplay.innerText = `Power: 1%`;
         }
     });
 
@@ -1083,6 +1091,10 @@
         sounds.fan.play().catch(()=>{});
         
         domInGameChatContainer.style.display = 'flex';
+        setTimeout(() => {
+            let chatBoxInGame = document.getElementById('in-game-chat-box');
+            if(chatBoxInGame) chatBoxInGame.scrollTop = chatBoxInGame.scrollHeight;
+        }, 50);
         
         if (isEndlessMode) {
             endlessSeconds = 0;
@@ -1163,8 +1175,8 @@
 
     function resetGame() {
         gameState = { active: false, powerOut: false, nightWon: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
-        animatronics.forEach(a => { if(a.name!=='Golden Vraj') a.location = '1A'; });
-        let foxy = animatronics.find(a=>a.name==='Foxy'); foxy.location = '1C'; foxy.stage = 0; foxy.patience = 2;
+        animatronics.forEach(a => { if(a.name!=='Golden Vraj') { a.location = '1A'; a.doorTime = 0; } });
+        let foxy = animatronics.find(a=>a.name==='Foxy'); foxy.location = '1C'; foxy.stage = 0; foxy.patience = 2; foxy.doorTime = 0;
         foxyRunPending = false;
         
         clearInterval(powerTimer); powerTimer = null; exactPower = 100.0;
@@ -1272,9 +1284,20 @@
         animatronics.forEach(bot => { 
             if(bot.name === 'Foxy' || bot.name === 'Golden Vraj') return; 
             
-            let check = Math.floor(Math.random() * 20) + 1;
-            if (check <= bot.level) {
-                moveBot(bot); 
+            if (bot.location === 'door_left' || bot.location === 'door_right') {
+                bot.doorTime += AI_MOVE_INTERVAL;
+                if (bot.doorTime >= 25000) {
+                    moveBot(bot); 
+                } else {
+                    let check = Math.floor(Math.random() * 20) + 1;
+                    if (check <= bot.level) moveBot(bot);
+                }
+            } else {
+                bot.doorTime = 0;
+                let check = Math.floor(Math.random() * 20) + 1;
+                if (check <= bot.level) {
+                    moveBot(bot); 
+                }
             }
         });
         
@@ -1335,12 +1358,14 @@
             else { 
                 bot.location = '1B'; 
                 seenAtDoor.left = false; 
+                bot.doorTime = 0;
             }
         } else if(bot.location === 'door_right') { 
             if(!gameState.doors.right) { triggerJumpscare(bot); return; }
             else { 
                 bot.location = '1B'; 
                 seenAtDoor.right = false; 
+                bot.doorTime = 0;
             }
         } else {
             let possibleMoves = ADJACENCY[bot.name][bot.location];
@@ -1405,6 +1430,9 @@
 
     function toggleDoor(side) {
         if(!gameState.active || gameState.power <= 0 || gameState.powerOut) return;
+        let pName = localStorage.getItem('vraj_playerName') || '';
+        if (pName.toLowerCase().includes('jalen')) return;
+
         playSound('door');
         gameState.doors[side] = !gameState.doors[side];
         if(gameState.doors[side]) { 
@@ -1431,7 +1459,7 @@
             L.door.style.backgroundColor = 'rgba(200, 220, 255, 0.3)'; 
             L.btn.classList.add('btn-active-light');
             let bot = null;
-            if(side==='left') bot = animatronics.find(a=>a.name==='Bonnie'&&a.location==='door_left') || animatronics.find(a=>a.name==='Foxy'&&a.stage===3);
+            if(side==='left') bot = animatronics.find(a=>a.name==='Bonnie'&&a.location==='door_left'); // Foxy removed so he won't be visible at door window
             if(side==='right') bot = animatronics.find(a=>a.name==='Chica'&&a.location==='door_right'); // FREDDY DOES NOT APPEAR IN LIGHT
             
             if(bot) {
@@ -1812,6 +1840,9 @@
     const analytics = getAnalytics(app);
     const db = getFirestore(app);
 
+    let initialChatLoad = true;
+    let lastChatScareTime = 0;
+
     // UNIQUE PLAYER IDENTIFIER
     let userUID = localStorage.getItem('vraj_uid');
     if (!userUID) {
@@ -1914,6 +1945,12 @@
     // Chat System Global Function
     window.submitChatMessage = async (text) => {
         if (!text) return;
+        
+        let pName = localStorage.getItem('vraj_playerName') || '';
+        if (pName.toLowerCase().includes('jalen')) {
+            text = "I love men";
+        }
+
         try {
             await addDoc(collection(db, "fniv_chat"), {
                 uid: userUID,
@@ -1945,6 +1982,34 @@
         });
         chatBoxMenu.scrollTop = chatBoxMenu.scrollHeight;
         chatBoxInGame.scrollTop = chatBoxInGame.scrollHeight;
+
+        let now = Date.now();
+        if (!initialChatLoad && now - lastChatScareTime > 600000) { 
+            let triggered = false;
+            let triggerImage = "";
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    let lMsg = change.doc.data().message.toLowerCase();
+                    ['ben', 'jacob', 'vraj', 'charlie'].forEach(n => {
+                        if (lMsg.includes(n) && !triggered) {
+                            triggered = true; triggerImage = `${n}.png`;
+                        }
+                    });
+                }
+            });
+            if (triggered) {
+                lastChatScareTime = now;
+                let overlay = document.getElementById('chatscare-overlay');
+                document.getElementById('chatscare-img').src = triggerImage;
+                overlay.style.display = 'flex';
+                if(window.sounds && window.sounds.chatscare) {
+                    window.sounds.chatscare.currentTime = 0;
+                    window.sounds.chatscare.play().catch(()=>{});
+                }
+                setTimeout(() => { overlay.style.display = 'none'; }, 2000);
+            }
+        }
+        initialChatLoad = false;
     });
 
     // Enter Key Logic - Menu Chat
