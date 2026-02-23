@@ -855,6 +855,12 @@
             document.getElementById('chat-input-row').style.display = 'flex';
             document.getElementById('tab-chat').classList.add('active');
             document.getElementById('tab-history').classList.remove('active');
+            
+            // Forces chat to scroll down when switching back to the chat tab
+            setTimeout(() => {
+                let cb = document.getElementById('chat-box');
+                cb.scrollTop = cb.scrollHeight;
+            }, 10);
         } else {
             document.getElementById('chat-box').classList.add('hidden');
             document.getElementById('history-box').classList.remove('hidden');
@@ -1980,8 +1986,12 @@
             chatBoxMenu.innerHTML += htmlStr;
             chatBoxInGame.innerHTML += htmlStr;
         });
-        chatBoxMenu.scrollTop = chatBoxMenu.scrollHeight;
-        chatBoxInGame.scrollTop = chatBoxInGame.scrollHeight;
+
+        // Ensure scrolling triggers properly after DOM populates
+        setTimeout(() => {
+            chatBoxMenu.scrollTop = chatBoxMenu.scrollHeight;
+            if (chatBoxInGame) chatBoxInGame.scrollTop = chatBoxInGame.scrollHeight;
+        }, 50);
 
         let now = Date.now();
         if (!initialChatLoad && now - lastChatScareTime > 600000) { 
@@ -1992,7 +2002,7 @@
                     let lMsg = change.doc.data().message.toLowerCase();
                     ['ben', 'jacob', 'vraj', 'charlie'].forEach(n => {
                         if (lMsg.includes(n) && !triggered) {
-                            triggered = true; triggerImage = `${n}.png`;
+                            triggered = true; triggerImage = `textures/${n}.png`;
                         }
                     });
                 }
