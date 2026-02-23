@@ -649,6 +649,7 @@
     <div id="in-game-chat-container">
         <div id="in-game-chat-box"></div>
         <input type="text" id="in-game-chat-input" placeholder="Type message..." maxlength="60">
+        <img id="in-game-poster" src="textures/poster.png" style="margin-top: 10px; width: 160px; align-self: center; cursor: pointer; pointer-events: auto;" onclick="playSound('poster')">
     </div>
     
     <div class="wall-section" id="wall-left">
@@ -758,7 +759,7 @@
         'textures/cam1a.png', 'textures/cam1b.png', 'textures/cam1c.png', 'textures/cam2a.png', 
         'textures/cam2b.png', 'textures/cam3.png', 'textures/cam4a.png', 'textures/cam4b.png', 
         'textures/cam5.png', 'textures/cam7.png',
-        'textures/cam1c2.png', 'textures/cam1c3.png', 'textures/cam1c4.png',
+        'textures/cam1c2.png', 'textures/cam1c3.png', 'textures/cam1c4.png', 'textures/secretcam2b.png', 'textures/poster.png',
         'textures/vrajs/Bonnie_1A.png', 'textures/vrajs/Bonnie_1B.png', 'textures/vrajs/Bonnie_5.png', 'textures/vrajs/Bonnie_2A.png', 'textures/vrajs/Bonnie_2B.png', 'textures/vrajs/Bonnie_3.png', 'textures/vrajs/Bonnie_office.png',
         'textures/vrajs/Chica_1A.png', 'textures/vrajs/Chica_1B.png', 'textures/vrajs/Chica_7.png', 'textures/vrajs/Chica_4A.png', 'textures/vrajs/Chica_4B.png', 'textures/vrajs/Chica_office.png',
         'textures/vrajs/Freddy_1A.png', 'textures/vrajs/Freddy_1B.png', 'textures/vrajs/Freddy_7.png', 'textures/vrajs/Freddy_4A.png', 'textures/vrajs/Freddy_4B.png', 'textures/vrajs/Freddy_office.png',
@@ -787,7 +788,8 @@
         hangup: new Audio('sounds/hangup.mp3'),
         click: new Audio('sounds/click.mp3'),
         kitchen: new Audio('sounds/kitchen.mp3'),
-        chatscare: new Audio('sounds/chatscare.mp3')
+        chatscare: new Audio('sounds/chatscare.mp3'),
+        poster: new Audio('sounds/poster.mp3')
     };
     
     sounds.fan.loop = true; sounds.fan.volume = 0.05; sounds.fan.preload = 'auto';
@@ -800,6 +802,7 @@
     if(sounds.powersong) sounds.powersong.preload = 'auto';
     if(sounds.kitchen) { sounds.kitchen.loop = true; sounds.kitchen.volume = 0.6; sounds.kitchen.preload = 'auto'; }
     if(sounds.chatscare) sounds.chatscare.preload = 'auto';
+    if(sounds.poster) sounds.poster.preload = 'auto';
 
     window.sounds = sounds;
 
@@ -891,7 +894,7 @@
     let seenAtDoor = { left: false, right: false };
 
     const NIGHT_DIFFICULTY = { 1: [0,0,0,0,0], 2: [3,1,0,1,0], 3: [0,5,1,2,0], 4: [2,4,2,6,0], 5: [5,7,3,5,0], 6: [10,12,4,16,0] };
-    let gameState = { active: false, powerOut: false, nightWon: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
+    let gameState = { active: false, powerOut: false, nightWon: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', secret2B: false, doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
     
     const ADJACENCY = {
         'Bonnie': { '1A':['1B', '5'], '1B':['2A', '5'], '5':['1B', '2A'], '2A':['3', '2B'], '3':['2A', '2B'], '2B':['door_left', '3'] },
@@ -1180,7 +1183,7 @@
     }
 
     function resetGame() {
-        gameState = { active: false, powerOut: false, nightWon: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
+        gameState = { active: false, powerOut: false, nightWon: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', secret2B: false, doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
         animatronics.forEach(a => { if(a.name!=='Golden Vraj') { a.location = '1A'; a.doorTime = 0; } });
         let foxy = animatronics.find(a=>a.name==='Foxy'); foxy.location = '1C'; foxy.stage = 0; foxy.patience = 2; foxy.doorTime = 0;
         foxyRunPending = false;
@@ -1498,6 +1501,7 @@
             domMonitorPanel.style.transform = "translateY(0%)";
             setTimeout(() => {
                 gameState.cameraOpen = true; domCameraSystem.style.display = 'block'; domMonitorOpener.style.display = 'none';
+                if(gameState.currentCam === '2B') gameState.secret2B = (Math.random() < 0.01);
                 domMonitorPanel.style.transition = 'none'; domMonitorPanel.style.transform = "translateY(100%)";
                 void domMonitorPanel.offsetWidth; domMonitorPanel.style.transition = "transform 0.1s linear";
                 renderCamera();
@@ -1537,6 +1541,11 @@
         if(gameState.currentCam === cam || gameState.powerOut) return;
         playSound('blip');
         gameState.currentCam = cam;
+        if (cam === '2B') {
+            gameState.secret2B = (Math.random() < 0.01);
+        } else {
+            gameState.secret2B = false;
+        }
         document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('cam-selected'));
         document.getElementById(`btn-${cam}`).classList.add('cam-selected');
         
@@ -1557,6 +1566,9 @@
         domCamLabel.innerText = `CAM ${gameState.currentCam}`;
         
         let bg = `textures/cam${gameState.currentCam.toLowerCase()}.png`;
+        if (gameState.currentCam === '2B' && gameState.secret2B) {
+            bg = 'textures/secretcam2b.png';
+        }
         
         if(gameState.currentCam === '6') { domCamContent.innerHTML = '<div style="font-size:30px;color:#555;">-CAMERA DISABLED-<br><br>AUDIO ONLY</div>'; domCamFeed.style.backgroundImage = 'none'; return; }
         
