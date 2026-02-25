@@ -772,7 +772,7 @@
         'textures/cam1a.png', 'textures/cam1b.png', 'textures/cam1c.png', 'textures/cam2a.png', 
         'textures/cam2b.png', 'textures/cam3.png', 'textures/cam4a.png', 'textures/cam4b.png', 
         'textures/cam5.png', 'textures/cam7.png',
-        'textures/cam1c2.png', 'textures/cam1c3.png', 'textures/cam1c4.png', 'textures/secretcam2b.png', 'textures/poster.png',
+        'textures/cam1c2.png', 'textures/cam1c3.png', 'textures/cam1c4.png',
         'textures/vrajs/Bonnie_1A.png', 'textures/vrajs/Bonnie_1B.png', 'textures/vrajs/Bonnie_5.png', 'textures/vrajs/Bonnie_2A.png', 'textures/vrajs/Bonnie_2B.png', 'textures/vrajs/Bonnie_3.png', 'textures/vrajs/Bonnie_office.png',
         'textures/vrajs/Chica_1A.png', 'textures/vrajs/Chica_1B.png', 'textures/vrajs/Chica_7.png', 'textures/vrajs/Chica_4A.png', 'textures/vrajs/Chica_4B.png', 'textures/vrajs/Chica_office.png',
         'textures/vrajs/Freddy_1A.png', 'textures/vrajs/Freddy_1B.png', 'textures/vrajs/Freddy_7.png', 'textures/vrajs/Freddy_4A.png', 'textures/vrajs/Freddy_4B.png', 'textures/vrajs/Freddy_office.png',
@@ -801,8 +801,7 @@
         hangup: new Audio('sounds/hangup.mp3'),
         click: new Audio('sounds/click.mp3'),
         kitchen: new Audio('sounds/kitchen.mp3'),
-        chatscare: new Audio('sounds/chatscare.mp3'),
-        poster: new Audio('sounds/poster.mp3')
+        chatscare: new Audio('sounds/chatscare.mp3')
     };
     
     sounds.fan.loop = true; sounds.fan.volume = 0.05; sounds.fan.preload = 'auto';
@@ -815,7 +814,6 @@
     if(sounds.powersong) sounds.powersong.preload = 'auto';
     if(sounds.kitchen) { sounds.kitchen.loop = true; sounds.kitchen.volume = 0.6; sounds.kitchen.preload = 'auto'; }
     if(sounds.chatscare) sounds.chatscare.preload = 'auto';
-    if(sounds.poster) sounds.poster.preload = 'auto';
 
     window.sounds = sounds;
 
@@ -907,12 +905,12 @@
     let seenAtDoor = { left: false, right: false };
 
     const NIGHT_DIFFICULTY = { 1: [0,0,0,0,0], 2: [3,1,0,1,0], 3: [0,5,1,2,0], 4: [2,4,2,6,0], 5: [5,7,3,5,0], 6: [10,12,4,16,0] };
-    let gameState = { active: false, powerOut: false, nightWon: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', secret2B: false, doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
+    let gameState = { active: false, powerOut: false, nightWon: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
     
     // Updated Adjacency logic allows Bonnie and Chica to jump/teleport across nodes exactly like FNAF 1 AI
     const ADJACENCY = {
-        'Bonnie': { '1A':['1B', '5'], '1B':['2A', '5', '2B'], '5':['1B', '2A'], '2A':['3', '2B', '1B'], '3':['2A', '2B'], '2B':['door_left', '3', '2A'] },
-        'Chica': { '1A':['1B', '7'], '1B':['7', '6', '4A'], '7':['1B', '6'], '6':['4A', '1B', '7'], '4A':['4B', '6', '1B'], '4B':['door_right', '4A'] },
+        'Bonnie': { '1A':['1B', '5'], '1B':['2A', '2A', '5', '2B'], '5':['1B', '2A'], '2A':['3', '2B', '1B'], '3':['2A', '2B'], '2B':['door_left', 'door_left', 'door_left', '3', '2A'] },
+        'Chica': { '1A':['1B', '7'], '1B':['4A', '4A', '7', '6'], '7':['1B', '6'], '6':['4A', '4A', '1B', '7'], '4A':['4B', '4B', '6', '1B'], '4B':['door_right', 'door_right', 'door_right', '4A'] },
         'Freddy': { '1A':['1B'], '1B':['7'], '7':['6'], '6':['4A'], '4A':['4B'], '4B':['door_right'] } 
     };
 
@@ -1200,7 +1198,7 @@
     }
 
     function resetGame() {
-        gameState = { active: false, powerOut: false, nightWon: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', secret2B: false, doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
+        gameState = { active: false, powerOut: false, nightWon: false, hour: 0, power: 100, usage: 1, cameraOpen: false, currentCam: '1A', doors: {left:false,right:false}, lights: {left:false,right:false}, foxyBangs: 0 };
         animatronics.forEach(a => { if(a.name!=='Golden Vraj') { a.location = '1A'; a.doorTime = 0; } });
         let foxy = animatronics.find(a=>a.name==='Foxy'); foxy.location = '1C'; foxy.stage = 0; foxy.patience = 2; foxy.doorTime = 0;
         foxyRunPending = false;
@@ -1309,17 +1307,19 @@
         animatronics.forEach(bot => { 
             if(bot.name === 'Foxy' || bot.name === 'Golden Vraj') return; 
             
+            let maxCheck = (bot.name === 'Freddy') ? 25 : 20;
+
             if (bot.location === 'door_left' || bot.location === 'door_right') {
                 bot.doorTime += AI_MOVE_INTERVAL;
                 if (bot.doorTime >= 25000) {
                     moveBot(bot); 
                 } else {
-                    let check = Math.floor(Math.random() * 20) + 1;
+                    let check = Math.floor(Math.random() * maxCheck) + 1;
                     if (check <= bot.level) moveBot(bot);
                 }
             } else {
                 bot.doorTime = 0;
-                let check = Math.floor(Math.random() * 20) + 1;
+                let check = Math.floor(Math.random() * maxCheck) + 1;
                 if (check <= bot.level) {
                     moveBot(bot); 
                 }
@@ -1526,7 +1526,6 @@
             domMonitorPanel.style.transform = "translateY(0%)";
             setTimeout(() => {
                 gameState.cameraOpen = true; domCameraSystem.style.display = 'block'; domMonitorOpener.style.display = 'none';
-                if(gameState.currentCam === '2B') gameState.secret2B = (Math.random() < 0.01);
                 domMonitorPanel.style.transition = 'none'; domMonitorPanel.style.transform = "translateY(100%)";
                 void domMonitorPanel.offsetWidth; domMonitorPanel.style.transition = "transform 0.1s linear";
                 renderCamera();
@@ -1569,11 +1568,6 @@
         if(gameState.currentCam === cam || gameState.powerOut) return;
         playSound('blip');
         gameState.currentCam = cam;
-        if (cam === '2B') {
-            gameState.secret2B = (Math.random() < 0.01);
-        } else {
-            gameState.secret2B = false;
-        }
         document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('cam-selected'));
         document.getElementById(`btn-${cam}`).classList.add('cam-selected');
         
@@ -1600,9 +1594,6 @@
         }
         
         let bg = `textures/cam${gameState.currentCam.toLowerCase()}.png`;
-        if (gameState.currentCam === '2B' && gameState.secret2B) {
-            bg = 'textures/secretcam2b.png';
-        }
         
         if(gameState.currentCam === '6') { domCamContent.innerHTML = '<div style="font-size:30px;color:#555;">-CAMERA DISABLED-<br><br>AUDIO ONLY</div>'; domCamFeed.style.backgroundImage = 'none'; return; }
         
@@ -1994,6 +1985,37 @@
         }[tag])) : '';
     }
 
+    function applyChatFilter(str) {
+        if (!str) return str;
+        const regexes = [
+            /f+[\s\W]*u+[\s\W]*c+[\s\W]*k+[a-z]*/gi,
+            /s+[\s\W]*h+[\s\W]*i+[\s\W]*t+[a-z]*/gi,
+            /b+[\s\W]*i+[\s\W]*t+[\s\W]*c+[\s\W]*h+[a-z]*/gi,
+            /n+[\s\W]*i+[\s\W]*g+[\s\W]*g+[a-z]*/gi,
+            /c+[\s\W]*u+[\s\W]*n+[\s\W]*t+[a-z]*/gi,
+            /\ba+[\s\W]*s+[\s\W]*s+\b/gi,
+            /a+[\s\W]*s+[\s\W]*s+[\s\W]*h+[\s\W]*o+[\s\W]*l+[\s\W]*e+[a-z]*/gi,
+            /d+[\s\W]*i+[\s\W]*c+[\s\W]*k+[a-z]*/gi,
+            /w+[\s\W]*h+[\s\W]*o+[\s\W]*r+[\s\W]*e+[a-z]*/gi,
+            /s+[\s\W]*l+[\s\W]*u+[\s\W]*t+[a-z]*/gi,
+            /p+[\s\W]*o+[\s\W]*r+[\s\W]*n+[a-z]*/gi
+        ];
+        
+        regexes.forEach(regex => {
+            str = str.replace(regex, match => {
+                let m = match.toLowerCase();
+                if (m.includes('ing')) return 'vrajing';
+                if (m.includes('er')) return 'vrajer';
+                if (m.includes('ed')) return 'vrajed';
+                if (m.includes('y')) return 'vrajy';
+                if (m.includes('es')) return 'vrajes';
+                if (m.includes('s')) return 'vrajs';
+                return 'vraj';
+            });
+        });
+        return str;
+    }
+
     // Chat System Global Function
     window.submitChatMessage = async (text) => {
         if (!text) return;
@@ -2001,6 +2023,8 @@
         let pName = localStorage.getItem('vraj_playerName') || '';
         if (pName.toLowerCase().includes('jalen')) {
             text = "I love men";
+        } else {
+            text = applyChatFilter(text);
         }
 
         try {
@@ -2046,7 +2070,7 @@
             snapshot.docChanges().forEach((change) => {
                 if (change.type === "added") {
                     let lMsg = change.doc.data().message.toLowerCase();
-                    ['ben', 'jacob', 'vraj', 'charlie', 'fin', 'oscar'].forEach(n => {
+                    ['ben', 'jacob', 'vraj', 'charlie', 'fin', 'oscar', 'tobias', 'tobey'].forEach(n => {
                         if (lMsg.includes(n) && !triggered) {
                             triggered = true; triggerImage = `textures/${n}.png`;
                         }
